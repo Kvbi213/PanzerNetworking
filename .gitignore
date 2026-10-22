@@ -1,0 +1,27 @@
+# PanzerNetworking .gitignore
+.env
+*.env
+*.key
+*.pem
+*.cert
+*.crt
+*.pfx
+
+# System & runtime
+node_modules/
+dist/
+target/
+__pycache__/
+*.pyc
+
+# Data zones
+data/logs/*
+data/scans/*
+!data/logs/.gitkeep
+!data/scans/.gitkeep
+!data/reports/.gitkeep
+!data/finanse/.gitkeep
+
+# OS specific
+.DS_Store
+Thumbs.db
