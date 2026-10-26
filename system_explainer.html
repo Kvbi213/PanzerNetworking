@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';" />
+  <title>PanzerNetworking :: Kompendium Architektury &amp; Master Explainer (v1.2.0-PROD)</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>" />
+  <meta name="description" content="Interaktywny system wyjasniajacy architekture PanzerNetworking: 6-wezlowy tranzyt L1-L7, kaskada matrioszki, modul kameleon, matematyka Poissona i Shannona, bilans lacza 60 GHz." />
+  <link rel="stylesheet" href="system_explainer.css" />
+</head>
+<body>
+
+  <!-- =============================================================
+       TOP NAVIGATION BAR
+       ============================================================= -->
+  <header class="top-nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: -0.01em;">PANZERNETWORKING</span>
+            <span class="tag-label" style="background: rgba(0, 240, 255, 0.1); color: var(--accent-cyan); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.3);">v1.2.0-PROD</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-emerald);">[+] STATUS: HARDENED ZERO-TRUST L1–L7</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#threat-model" class="nav-link">Model Zagrożeń</a>
+        <a href="#pipeline" class="nav-link">6 Węzłów</a>
+        <a href="#crypto-cascade" class="nav-link">Kaskada Szyfrów</a>
+        <a href="#wireshark" class="nav-link">Ramka 1400 B</a>
+        <a href="#kameleon" class="nav-link">Kameleon</a>
+        <a href="#math-lab" class="nav-link">Matematyka &amp; Fizyka</a>
+        <a href="#adversary-matrix" class="nav-link">Macierz Adwersarza</a>
+        <a href="#simulator" class="nav-link">Symulator 60 FPS</a>
+        <a href="#audit-faq" class="nav-link">Panel Audytowy</a>
+      </nav>
+
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <a href="index.html" class="btn-tactile btn-primary">
+          <span>URUCHOM DIGITAL TWIN (REACT)</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- =============================================================
+         SECTION 1: HERO & CORE PHILOSOPHY
+         ============================================================= -->
+    <section id="hero" style="padding-top: 4rem; padding-bottom: 2.5rem; text-align: center;">
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.9rem; border-radius: 30px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.25); margin-bottom: 1.5rem;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-emerald); box-shadow: 0 0 8px var(--accent-emerald);"></span>
+        <span class="tag-label" style="color: var(--accent-cyan);">OFICJALNE KOMPENDIUM INŻYNIERYJNE SYSTEMU</span>
+      </div>
+
+      <h1 class="display-title" style="margin-bottom: 1.25rem;">
+        Architektura Referencyjna <br />
+        <span style="background: linear-gradient(135deg, #00f0ff 0%, #a855f7 50%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          Hardened Zero-Trust Network Routing
+        </span>
+      </h1>
+
+      <p style="max-width: 820px; margin: 0 auto 2.5rem auto; color: var(--text-muted); font-size: 1.05rem; line-height: 1.65;">
+        Kompleksowe omówienie wielowarstwowej magistrali tranzytowej, kaskady postkwantowej ML-KEM-1024,
+        bufora Poissona o stałej przepustowości (CBR), steganografii ramki 1400 B oraz izolacji fizycznej
+        w pasmie 60 GHz V-Band. Zbudowane w oparciu o zasady <strong>Apple Design</strong> i rygor inżynieryjny <strong>Antigravity Nano v3.2</strong>.
+      </p>
+
+      <!-- Key Engineering Telemetry Badges -->
+      <div class="grid-3" style="max-width: 960px; margin: 0 auto; text-align: left;">
+        <div class="glass-surface-subtle" style="padding: 1.25rem;">
+          <div class="tag-label" style="color: var(--accent-cyan); margin-bottom: 0.35rem;">ROZPRZĘŻENIE INFORMACJI</div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #fff;">Zasada Zero-Trust</div>
+          <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 0.25rem;">
+            Żaden pojedynczy węzeł w magistrali nie zna jednocześnie: tożsamości nadawcy, adresu docelowego oraz treści ładunku.
+          </div>
+        </div>
+
+        <div class="glass-surface-subtle" style="padding: 1.25rem;">
+          <div class="tag-label" style="color: var(--accent-purple); margin-bottom: 0.35rem;">ASYMETRIA KOSZTÓW</div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #fff;">Model GPA-R</div>
+          <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 0.25rem;">
+            Przeniesienie kosztu deanonimizacji na poziom wielomilionowych nakładów MLAT i operacji radio-pelengacji SIGINT w terenie.
+          </div>
+        </div>
+
+        <div class="glass-surface-subtle" style="padding: 1.25rem;">
+          <div class="tag-label" style="color: var(--accent-emerald); margin-bottom: 0.35rem;">ODPORNOŚĆ POSTKWANTOWA</div>
+          <div style="font-size: 1.15rem; font-weight: 700; color: #fff;">FIPS 203 + ARX/SPN</div>
+          <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 0.25rem;">
+            Hybryda kratowa ML-KEM-1024 + X25519 z podwójną kaskadą symetryczną AES-256-GCM oraz XChaCha20-Poly1305.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 2: THREAT MODEL & OPERATIONAL ECONOMICS
+         ============================================================= -->
+    <section id="threat-model">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <div class="tag-label" style="color: var(--accent-rose);">SEKCJA 01 :: ASYMETRIA KOSZTÓW &amp; PRAWA FIZYKI</div>
+            <h2 class="section-title">Formalny Model Zagrożeń (Threat Model GPA-R)</h2>
+          </div>
+          <div class="tag-label" style="background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); padding: 4px 10px; border-radius: 6px;">
+            KLASYFIKACJA: ADVERSARY LEVEL IV
+          </div>
+        </div>
+
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          W profesjonalnej inżynierii bezpieczeństwa nie istnieje pojęcie „magicznej 100% nienamierzalności”. PanzerNetworking definiuje ochronę poprzez <strong>trzy ściśle rozgraniczone cele</strong> oraz <strong>asymetrię operacyjną</strong>:
+        </p>
+
+        <div class="grid-3" style="margin-bottom: 2rem;">
+          <div class="glass-surface-subtle" style="padding: 1.5rem; border-left: 3px solid var(--accent-cyan);">
+            <h3 style="font-size: 1rem; color: var(--accent-cyan); margin-bottom: 0.5rem;">1. Niewykrywalność (Undetectability)</h3>
+            <p style="font-size: 0.82rem; font-family: var(--font-mono); color: var(--text-muted);">
+              Dla domowego dostawcy (ISP) ruch w ogóle nie istnieje (0 B na linii stacjonarnej). Dla systemów cenzury i DPI ruch wygląda jak typowa telemetria HTTPS / WebSocket (kod HTTP 200 OK).
+            </p>
+          </div>
+
+          <div class="glass-surface-subtle" style="padding: 1.5rem; border-left: 3px solid var(--accent-purple);">
+            <h3 style="font-size: 1rem; color: var(--accent-purple); margin-bottom: 0.5rem;">2. Anonimowość (Unlinkability)</h3>
+            <p style="font-size: 0.82rem; font-family: var(--font-mono); color: var(--text-muted);">
+              Brak matematycznej i logicznej korelacji między pakietem wyjściowym opuszczającym węzeł Exit a tożsamością fizyczną operatora stacji roboczej na Węźle 0.
+            </p>
+          </div>
+
+          <div class="glass-surface-subtle" style="padding: 1.5rem; border-left: 3px solid var(--accent-emerald);">
+            <h3 style="font-size: 1rem; color: var(--accent-emerald); margin-bottom: 0.5rem;">3. Nieopłacalność Operacyjna</h3>
+            <p style="font-size: 0.82rem; font-family: var(--font-mono); color: var(--text-muted);">
+              Zidentyfikowanie operatora wymaga nakładów finansowych (wnioski MLAT do wielu państw) i fizycznych (mobilne ekipy radiowe w promieniu 200 m) przewyższających wartość celu.
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-surface-subtle" style="padding: 1.25rem; font-family: var(--font-mono); font-size: 0.8rem; background: rgba(0,0,0,0.4);">
+          <div style="color: var(--accent-amber); font-weight: 700; margin-bottom: 0.4rem;">[!] ZAŁOŻENIE BRZEGOWE MODELU (CO JEST POZA ZAKRESEM OCHRONY SIECIOWEJ):</div>
+          <div style="color: var(--text-dim); line-height: 1.6;">
+            Architektura sieciowa nie chroni przed fizycznym zajęciem włączonego komputera z kluczami w pamięci RAM przed upływem 300 ms,
+            ani przed dobrowolnym podaniem własnych danych KYC / telefonu w formularzu przeglądarki.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 3: THE 6-NODE TRANSIT PIPELINE
+         ============================================================= -->
+    <section id="pipeline">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-cyan); margin-bottom: 0.25rem;">SEKCJA 02 :: TOPOLOGIA WARSTWOWA (OSI L1–L7)</div>
+        <h2 class="section-title">6-Węzłowa Magistrala Tranzytowa PanzerNetworking</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+          Kliknij na dowolny węzeł na osi czasu, aby wyświetlić jego szczegółową specyfikację inżynieryjną, rolę kryptograficzną oraz widok z perspektywy adwersarza.
+        </p>
+
+        <!-- Node Scrubber Tabs -->
+        <div class="grid-6" style="margin-bottom: 2rem;" id="node-tabs-container">
+          <!-- Dynamically populated by JS -->
+        </div>
+
+        <!-- Node Detailed View Card -->
+        <div id="node-details-card" class="glass-surface-subtle" style="padding: 2rem; border-top: 2px solid var(--accent-cyan);">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 4: WIRESHARK LIVE DISSECTOR & 1400 B FRAME
+         ============================================================= -->
+    <section id="wireshark">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <div class="tag-label" style="color: var(--accent-emerald);">SEKCJA 03 :: STEGANOGRAFIA SIECIOWA &amp; BINARNY STANDARD MTU</div>
+            <h2 class="section-title">Wireshark Live Dissector :: Ramka 1400 B MTU</h2>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="btn-toggle-payload-type" class="btn-tactile btn-primary">
+              TYP ŁADUNKU: 0x01 (DANE REALNE)
+            </button>
+            <button id="btn-resample-frame" class="btn-tactile">
+              NOWY PAKIET (RE-SAMPLE)
+            </button>
+          </div>
+        </div>
+
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Każdy pakiet opuszczający Węzeł 0 jest formatowany do ściśle zdefiniowanej struktury o stałej długości <strong>1400 bajtów</strong>.
+          Zewnętrzny nagłówek udaje standardowy rekord TLS 1.3 Application Data (0x17), co uniemożliwia zaporom ogniowym NGFW detekcję sygnatur WireGuard lub OpenVPN.
+          <strong>Kliknij dowolny segment poniżej</strong>, aby zbadać jego strukturę binarną, zakres offsetu oraz rolę steganograficzną.
+        </p>
+
+        <!-- Frame Layout Diagram (Interactive Segments) -->
+        <div style="background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; overflow-x: auto;">
+          <div style="min-width: 680px; font-family: var(--font-mono); font-size: 0.72rem;">
+            <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+              <div class="frame-block active" data-field="tls" style="flex: 1; background: rgba(0, 240, 255, 0.2); border: 1px solid var(--accent-cyan); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-cyan);">
+                TLS 1.3 Record (5 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">0x17 0x0303 [1395 B]</span>
+              </div>
+              <div class="frame-block" data-field="nonce" style="flex: 2; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-emerald); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-emerald);">
+                XChaCha20 Nonce (24 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">192-bitowy wektor IV</span>
+              </div>
+              <div class="frame-block" data-field="inner" style="flex: 1; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-amber); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-amber);">
+                Inner Hdr (4 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">Type + Length</span>
+              </div>
+              <div class="frame-block" data-field="payload" style="flex: 6; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--accent-purple); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-purple);">
+                Szyfrowany Ładunek AES-256-GCM + Losowy Padding Wyrównujący (1335 B)<br/>
+                <span style="color: var(--text-dim); font-size: 0.65rem;">Komórki Tor (514 B) + Padding do pełnych 1400 bajtów</span>
+              </div>
+              <div class="frame-block" data-field="mac" style="flex: 2; background: rgba(244, 63, 94, 0.2); border: 1px solid var(--accent-rose); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-rose);">
+                Tagi MAC (32 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">AES-GCM (16) + Poly1305 (16)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Frame Field Detailed Inspector Box -->
+        <div id="frame-field-inspector" class="glass-surface-subtle" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: 0.78rem;">
+          <!-- Dynamically populated by JS -->
+        </div>
+
+        <!-- Hex / ASCII Split Viewer -->
+        <div class="grid-2">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="tag-label" style="color: var(--accent-cyan);">HEX DUMP (PIERWSZE 128 BAJTÓW)</span>
+              <span id="hex-offset-label" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">Offset: 0x0000 - 0x007F</span>
+            </div>
+            <pre id="raw-hex-dump" style="background: rgba(0,0,0,0.7); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: #cbd5e1; overflow-x: auto; line-height: 1.5; height: 260px;"></pre>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="tag-label" style="color: var(--accent-purple);">DEKODOWANIE ASCII / ENTROPIA</span>
+              <span id="ascii-verdict-label" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-emerald);">Brak widocznych stringów (H=7.999 b/B)</span>
+            </div>
+            <pre id="raw-ascii-dump" style="background: rgba(0,0,0,0.7); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); overflow-x: auto; line-height: 1.5; height: 260px;"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 5: MATRIOSZKA CRYPTOGRAPHIC CASCADE
+         ============================================================= -->
+    <section id="crypto-cascade">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-purple); margin-bottom: 0.25rem;">SEKCJA 04 :: MODEL MATRIOSZKI &amp; ALGEBRA SZYFRÓW</div>
+        <h2 class="section-title">Wielowarstwowa Kaskada Kryptograficzna (SPN + ARX + KEM)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+          Zasada <strong>Defense-in-Depth</strong>: połączenie szyfrów o fundamentalnie odmiennych strukturach algebraicznych.
+          Złamanie kaskady wymaga jednoczesnego sforsowania ciała Galois GF(2^8) w sieci SPN oraz operacji ARX odpornych na ataki cache-timing.
+        </p>
+
+        <div class="grid-2" style="align-items: center;">
+          <!-- Concentric SVG Model -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;">
+            <div style="position: relative; width: 320px; height: 320px;">
+              <svg viewBox="0 0 320 320" style="width: 100%; height: 100%;">
+                <!-- Shell 1 -->
+                <circle cx="160" cy="160" r="145" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="6 4" class="crypto-circle" data-shell="1" style="cursor: pointer; opacity: 0.7;"/>
+                <!-- Shell 2 -->
+                <circle cx="160" cy="160" r="118" fill="none" stroke="#a855f7" stroke-width="2" class="crypto-circle" data-shell="2" style="cursor: pointer; opacity: 0.7;"/>
+                <!-- Shell 3 -->
+                <circle cx="160" cy="160" r="90" fill="none" stroke="#10b981" stroke-width="2" class="crypto-circle" data-shell="3" style="cursor: pointer; opacity: 0.7;"/>
+                <!-- Shell 4 -->
+                <circle cx="160" cy="160" r="62" fill="none" stroke="#f59e0b" stroke-width="2" class="crypto-circle" data-shell="4" style="cursor: pointer; opacity: 0.7;"/>
+                <!-- Shell 5 -->
+                <circle cx="160" cy="160" r="35" fill="rgba(244, 63, 94, 0.2)" stroke="#f43f5e" stroke-width="2" class="crypto-circle" data-shell="5" style="cursor: pointer; opacity: 0.8;"/>
+                <text x="160" y="164" text-anchor="middle" fill="#ffffff" font-size="10" font-family="var(--font-mono)" font-weight="bold">PAYLOAD</text>
+              </svg>
+            </div>
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
+              <button class="btn-tactile shell-btn" data-shell="1">P1: TLS/ECH</button>
+              <button class="btn-tactile shell-btn" data-shell="2">P2: ML-KEM</button>
+              <button class="btn-tactile shell-btn" data-shell="3">P3: XChaCha20</button>
+              <button class="btn-tactile shell-btn" data-shell="4">P4: AES-256</button>
+              <button class="btn-tactile shell-btn" data-shell="5">P5: Tor Cell</button>
+            </div>
+          </div>
+
+          <!-- Shell Inspector Card -->
+          <div id="crypto-inspector-card" class="glass-surface-subtle" style="padding: 1.75rem;">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 6: KAMELEON SYSTEM (ANTI-FINGERPRINTING)
+         ============================================================= -->
+    <section id="kameleon">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-amber); margin-bottom: 0.25rem;">SEKCJA 05 :: WARSTWA APLIKACJI (WĘZEŁ 0)</div>
+        <h2 class="section-title">System Kameleon (Anti-Fingerprinting &amp; Multi-Persona)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+          Nawet najlepszy tunel sieciowy zawiedzie, jeśli serwer zidentyfikuje komputer po hashach Canvas/WebGL, sygnaturach czcionek lub biometrii pisania na klawiaturze.
+        </p>
+
+        <!-- Persona Modes Switcher -->
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+          <button class="btn-tactile persona-btn active" data-persona="GHOST">TRYB 1: GHOST / STEALTH</button>
+          <button class="btn-tactile persona-btn" data-persona="BURNER">TRYB 2: BURNER / ISOLATE</button>
+          <button class="btn-tactile persona-btn" data-persona="MULTI_PERSONA">TRYB 3: MULTI-PERSONA</button>
+        </div>
+
+        <div id="persona-details-card" class="glass-surface-subtle" style="padding: 1.75rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 7: MATHEMATICAL & PHYSICS LABORATORY
+         ============================================================= -->
+    <section id="math-lab">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-cyan); margin-bottom: 0.25rem;">SEKCJA 06 :: MATEMATYKA, STATYSTYKA I FIZYKA RELACYJNA</div>
+        <h2 class="section-title">Interaktywne Laboratorium Fizyki i Kryptografii</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+          Zbadaj bezpośrednio wzory matematyczne leżące u podstaw bezpieczeństwa PanzerNetworking: kalkulator entropii Shannona, bilans łącza 60 GHz V-Band oraz rozkład wykładniczy Poissona.
+        </p>
+
+        <div class="grid-2">
+          <!-- Tool 1: Shannon Entropy Analyzer -->
+          <div class="glass-surface-subtle" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="tag-label" style="color: var(--accent-purple);">KALKULATOR ENTROPII SHANNONA H(X)</span>
+              <span id="entropy-value-display" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent-purple);">7.9994 b/B</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 0.75rem;">
+              <span id="entropy-verdict-display" class="tag-label" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 4px;">
+                [+] STATUS: SZUM BIAŁY (NIEWYKRYWALNY DLA DPI)
+              </span>
+            </div>
+            <p style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 0.75rem;">
+              Formuła: H(X) = - &Sigma; P(x) * log2(P(x)). Wartość &gt; 7.999 oznacza brak powtarzalnych wzorców statystycznych dla systemów DPI.
+            </p>
+            <textarea id="entropy-input" aria-label="Tekst wejściowy do analizy entropii Shannona" style="width: 100%; height: 90px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 0.75rem; padding: 0.5rem; resize: none; margin-bottom: 0.75rem;" placeholder="Wklej dowolny tekst lub kliknij 'Generuj Szyfr PanzerNet'..."></textarea>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="btn-entropy-calc" aria-label="Oblicz entropię Shannona" class="btn-tactile btn-primary">OBLICZ ENTROPIĘ</button>
+              <button id="btn-entropy-mock" aria-label="Generuj losowy szyfr PanzerNetworking" class="btn-tactile">GENERUJ SZYFR PANZERNET</button>
+            </div>
+          </div>
+
+          <!-- Tool 2: 60 GHz Oxygen Absorption Calculator -->
+          <div class="glass-surface-subtle" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span class="tag-label" style="color: var(--accent-cyan);">BILANS ŁĄCZA 60 GHz V-BAND &amp; TLEN</span>
+              <span id="attenuation-display" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">-120.0 dB</span>
+            </div>
+            <p style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 0.75rem;">
+              Rezonans tlenowy (O2) powoduje tłumienie ~16 dB/km, uniemożliwiając podsłuch z boku wiązki &lt;1.5°.
+            </p>
+            <div style="margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.25rem;">
+                <span style="color: var(--text-muted);">Dystans d:</span>
+                <span id="dist-label" style="color: var(--accent-cyan); font-weight: 700;">0.25 km (250 m)</span>
+              </div>
+              <input type="range" id="dist-slider" aria-label="Suwak odległości łącza 60 GHz w kilometrach" min="0.05" max="3.0" step="0.05" value="0.25" />
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">
+              <span>Tłumienie tlenowe: </span><span id="o2-loss-label" style="color: var(--accent-rose); font-weight: 700;">4.0 dB</span> |
+              <span>Tłumienie FSPL: </span><span id="fspl-loss-label" style="color: #fff; font-weight: 700;">116.0 dB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 8: ADVERSARY SURVEILLANCE MATRIX
+         ============================================================= -->
+    <section id="adversary-matrix">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-rose); margin-bottom: 0.25rem;">SEKCJA 07 :: PERSPEKTYWA OBSERWATORA (STRES TEST)</div>
+        <h2 class="section-title">Macierz Odporności Wektorowej (Widok Adwersarza)</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Zestawienie dowodzące, co konkretnie widzi dany podmiot w łańcuchu tranzytowym, a czego fizycznie ani matematycznie nie jest w stanie ustalić:
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.75rem; text-align: left;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-specular); color: #fff;">
+                <th style="padding: 0.75rem;">Podmiot / Adwersarz</th>
+                <th style="padding: 0.75rem;">Co rejestruje w logach?</th>
+                <th style="padding: 0.75rem; color: var(--accent-emerald);">Czego NIE JEST w stanie ustalić?</th>
+                <th style="padding: 0.75rem;">Wektor mitygacji</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">1. Domowy ISP Operatora</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Całkowity brak ruchu (IDLE / 0 B)</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Faktu obecności operatora i transmisji</td>
+                <td style="padding: 0.75rem;">Most radiowy 60 GHz (Węzeł 1)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">2. Skaner Radiowy (Wardriving)</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Cisza / Szum w pasmach 2.4/5 GHz</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Istnienia linku 60 GHz poza osią 1.5°</td>
+                <td style="padding: 0.75rem;">Pencil Beam &amp; absorpcja tlenowa</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">3. ISP Punktu Zewnętrznego A</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Strumień TLS do IP Cloudflare Anycast</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Lokalizacji stacji, subdomeny, treści</td>
+                <td style="padding: 0.75rem;">Encrypted Client Hello (ECH)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">4. System DPI / Cenzor</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Prawidłowy ruch HTTPS / WebSocket</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Sygnatur VPN/Tor (brak uścisków dłoni)</td>
+                <td style="padding: 0.75rem;">WebTunnel za serwerem Nginx/Caddy</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border-subtle);">
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">5. Obserwator Globalny (IXP)</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Zaszyfrowany strumień stałej przepływności</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Korelacji czasu wejścia i wyjścia (&Delta;t)</td>
+                <td style="padding: 0.75rem;">Bufor Poissona + Dummy Chaff (W3)</td>
+              </tr>
+              <tr>
+                <td style="padding: 0.75rem; font-weight: 700; color: var(--accent-cyan);">6. Serwis Docelowy &amp; Anti-Bot</td>
+                <td style="padding: 0.75rem; color: var(--text-dim);">Zapytanie z IP Tor Exit / Residential</td>
+                <td style="padding: 0.75rem; color: var(--accent-emerald);">Systemu Tails, lokalizacji, powiązań</td>
+                <td style="padding: 0.75rem;">Moduł Kameleon (Spoofing)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 9: REAL-TIME 60 FPS PARTICLE PHYSICS CANVAS
+         ============================================================= -->
+    <section id="simulator">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <div class="tag-label" style="color: var(--accent-cyan);">SEKCJA 08 :: SILNIK CZĄSTECZKOWY HTML5 CANVAS</div>
+            <h2 class="section-title">Interaktywny Symulator Fizyki Ruchu 60 FPS</h2>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="sim-btn-pause" class="btn-tactile">WSTRZYMAJ</button>
+            <button id="sim-btn-chaff" class="btn-tactile" style="color: var(--accent-amber); border-color: rgba(245, 158, 11, 0.4);">
+              CHAFF BURST (+25 PKT)
+            </button>
+            <button id="sim-btn-dpi" class="btn-tactile" style="color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.4);">
+              SONDA DPI PROBE
+            </button>
+          </div>
+        </div>
+
+        <div style="position: relative; width: 100%; height: 320px; background: rgba(0,0,0,0.65); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem;">
+          <canvas id="physics-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
+
+          <!-- Canvas Legend -->
+          <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 12px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.7rem;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan);"></span>
+              <span>Pakiety Danych (0x01)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-amber); box-shadow: 0 0 8px var(--accent-amber);"></span>
+              <span>Dummy Chaff (0xFF)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-purple);"></span>
+              <span>Bufor Poissona W3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Sliders -->
+        <div class="grid-2">
+          <div class="glass-surface-subtle" style="padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.35rem;">
+              <span style="color: var(--text-muted);">Częstotliwość Wejściowa:</span>
+              <span id="pps-val-label" style="color: var(--accent-cyan); font-weight: 700;">24 PPS</span>
+            </div>
+            <input type="range" id="pps-slider" min="2" max="60" value="24" />
+          </div>
+
+          <div class="glass-surface-subtle" style="padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.35rem;">
+              <span style="color: var(--text-muted);">Parametr Rozkładu Poissona &lambda;:</span>
+              <span id="lambda-val-label" style="color: var(--accent-purple); font-weight: 700;">25 ms</span>
+            </div>
+            <input type="range" id="lambda-slider" min="5" max="80" value="25" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================================
+         SECTION 10: AUDIT DEFENSE & FAQ ACCORDION
+         ============================================================= -->
+    <section id="audit-faq" style="padding-bottom: 6rem;">
+      <div class="glass-surface" style="padding: 2.5rem;">
+        <div class="tag-label" style="color: var(--accent-cyan); margin-bottom: 0.25rem;">SEKCJA 09 :: PANEL AUDYTOWY &amp; PROCEDURY OPSEC</div>
+        <h2 class="section-title">Obrona Architektury &amp; Odpowiedzi dla Audytorów</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+          Inżynieryjne uzasadnienie kompromisów wydajnościowych, bilansu opóźnień (231 ms RTT) oraz krytycznych procedur operacyjnych.
+        </p>
+
+        <div class="glass-surface-subtle" style="border-radius: 16px; overflow: hidden;">
+          <div class="accordion-item open">
+            <button class="accordion-header">
+              <span>Czy opóźnienie ~230 ms nie czyni systemu bezużytecznym do codziennej pracy?</span>
+              <span class="accordion-icon">&darr;</span>
+            </button>
+            <div class="accordion-body">
+              PanzerNetworking to architektura asymetrii kosztów zaprojektowana dla działań high-assurance (bezpieczna komunikacja, OSINT, whistleblowing, zarządzanie infrastrukturą krytyczną), a nie dla streamingu 4K czy gamingu e-sportowego. Opóźnienie 230 ms pozwala na całkowicie płynne przeglądanie stron WWW, korzystanie z terminala SSH oraz bezpieczną korespondencję, eliminując jednocześnie podatność na ataki korelacji czasowej GPA.
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span>Dlaczego wybrano pasmo 60 GHz V-Band zamiast standardowego Wi-Fi 5 GHz lub 5G?</span>
+              <span class="accordion-icon">&darr;</span>
+            </button>
+            <div class="accordion-body">
+              Pasmo 60 GHz charakteryzuje się zjawiskiem rezonansowej absorpcji energii fal elektromagnetycznych przez cząsteczki tlenu (tłumienie 15-16 dB/km). W połączeniu z paraboliczną anteną kierunkową o wiązce Pencil Beam (&lt;1.5°), uniemożliwia to podsłuch z boku trasy sygnału oraz detekcję anteny z odległości powyżej kilkuset metrów (standard LPI/LPD — Low Probability of Intercept).
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span>W jaki sposób Węzeł 4 radzi sobie z aktywnym sondowaniem cenzorskim (Active Probing)?</span>
+              <span class="accordion-icon">&darr;</span>
+            </button>
+            <div class="accordion-body">
+              Na Węźle 4 działa prawdziwy serwer WWW (Nginx/Caddy) hostujący legalną stronę internetową z ważnym certyfikatem TLS Let's Encrypt. Każda skanująca sonda cenzorska otrzymuje normalny kod HTTP 200 OK. Dopiero żądanie zawierające tajną ścieżkę URI i właściwy nagłówek autoryzacyjny inicjuje cichy upgrade połączenia HTTP/2 do strumienia WebSocket podpiętego do demona Tor.
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header">
+              <span>Po co łączyć AES-256 z XChaCha20, skoro oba szyfry są uznawane za bezpieczne?</span>
+              <span class="accordion-icon">&darr;</span>
+            </button>
+            <div class="accordion-body">
+              Zasada łączenia odmiennych struktur algebraicznych: AES-256 to sieć podstawieniowo-permutacyjna (SPN) operująca na ciałach skończonych GF(2^8) z S-Boxami, natomiast XChaCha20 to szyfr strumieniowy oparty wyłącznie na operacjach ARX (Addition-Rotation-XOR) bez żadnych tablic przeglądowych (odporny na cache-timing). Przełamanie kaskady wymagałoby równoczesnego odkrycia krytycznych wad w dwóch niezależnych dziedzinach kryptoanalizy.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =============================================================
+       CLIENT-SIDE JAVASCRIPT CONTROLLERS (APPLE DYNAMICS)
+       External Controller with Pure DOM createElement & Strict CSP
+       ============================================================= -->
+  <script src="system_explainer.js" defer></script>
+</body>
+</html>
