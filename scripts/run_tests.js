@@ -127,12 +127,17 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
 // TEST 7: Frame Dissector Logic & Field Validation Robustness
 runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
   function deepFreeze(obj) {
-    if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
-      Object.freeze(obj);
-      Object.getOwnPropertyNames(obj).forEach(prop => {
-        deepFreeze(obj[prop]);
-      });
+    if (obj === null || typeof obj !== 'object') {
+      throw new TypeError('deepFreeze expects an object');
     }
+    if (Object.isFrozen(obj)) return obj;
+    Object.freeze(obj);
+    Object.getOwnPropertyNames(obj).forEach(prop => {
+      const val = obj[prop];
+      if (val !== null && typeof val === 'object') {
+        deepFreeze(val);
+      }
+    });
     return obj;
   }
 
@@ -173,6 +178,8 @@ runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
   assert.strictEqual(Object.isFrozen(DEFAULT_SPECS), true, 'DEFAULT_SPECS musi być zamrożony');
   const customSpecs = testCreateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 });
   assert.strictEqual(Object.isFrozen(customSpecs), true, 'createFieldSpecs musi zwracać zamrożony obiekt');
+  assert.throws(() => deepFreeze(null), TypeError, 'deepFreeze(null) musi rzucić TypeError');
+  assert.throws(() => deepFreeze('primitive'), TypeError, 'deepFreeze(string) musi rzucić TypeError');
   assert.throws(() => testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), /suma nagłówków wynosi/, 'Niekompletne nagłówki powinny rzucić Error');
   assert.throws(() => testValidateFieldSpecs(null), TypeError, 'null powinien rzucić TypeError');
   assert.throws(() => testValidateFieldSpecs('invalid'), TypeError, 'string powinien rzucić TypeError');
