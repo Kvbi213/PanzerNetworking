@@ -46,3 +46,12 @@
 - `[*]` Skorygowano inicjalne parametry fizyczne bilansu łącza 60 GHz (-120.0 dB, FSPL 116.0 dB, O2 4.0 dB dla d = 0.25 km) oraz zsynchronizowano podświetlenia aktywnych powłok kryptograficznych (`.shell-btn.active`).
 - `[*]` Wyeliminowano defekt wielokrotnej inicjalizacji DOM (idempotentny boot) oraz zoptymalizowano pipeline produkcyjny Vite o automatyczną replikację zasobów do katalogu `dist/`.
 - `[+]` Zaimplementowano reguły dostępności Apple Design (§14): `prefers-reduced-transparency` i `prefers-contrast` oraz responsywne breakpointy mobilne.
+
+## v 1.2.2 — 2026-10-26 (Production Test Suite & Code Review Verification)
+- `[+]` Wprowadzono kompleksowy zestaw 7 testów jednostkowych i integracyjnych (`scripts/run_tests.js`) z bezpośrednim sprawdzaniem integralności zasobów produkcyjnych, reguł CSP (brak `unsafe-inline`), zerowej tolerancji na `innerHTML`/`eval` oraz rygorystycznym kodem wyjścia `exit(1)` na wypadek jakiejkolwiek anomalii.
+- `[+]` Zaimplementowano odporną na awarie replikację zasobów w skrypcie `scripts/copy_assets.js` z weryfikacją uprawnień do zapisu katalogu docelowego (`fs.constants.W_OK`).
+- `[+]` Zaimplementowano kryptograficznie bezpieczny generator pseudolosowy CSPRNG (`window.crypto.getRandomValues`) w `generateRandomByteHex()` z bezpiecznym fallbackiem oraz niemutowalną stałą specyfikacji `DEFAULT_FIELD_SPECS`.
+- `[+]` Wprowadzono ścisłe rzucanie wyjątków `TypeError`/`Error` w `validateFieldSpecs()` oraz zabezpieczenie przed modyfikacją typów i wielowątkowymi wyścigami w `generateFrameData()`.
+- `[+]` Dodano atrybuty dostępności `aria-live="polite"` do kontenerów zrzutu Wireshark Hex/ASCII w `system_explainer.html`.
+- `[*]` Pomyślny audyt zewnętrznego Senior Code Reviewera Groq (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`) ze statusem `[+] SUCCESS :: KOD ZWERYFIKOWANY - BRAK UWAG`.
+- `[*]` Zsynchronizowano dokumentację w `ARCHITECTURE.md` oraz repozytorium wiedzy Obsidian.

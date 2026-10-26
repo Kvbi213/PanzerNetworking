@@ -129,7 +129,7 @@ runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
   const DEFAULT_SPECS = Object.freeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
 
   function testValidateFieldSpecs(specs = DEFAULT_SPECS) {
-    if (!specs || typeof specs !== 'object') {
+    if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
       throw new TypeError('Specyfikacja pól nagłówka musi być obiektem.');
     }
     const headerTotal =
@@ -149,6 +149,7 @@ runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
   assert.throws(() => testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), /suma nagłówków wynosi/, 'Niekompletne nagłówki powinny rzucić Error');
   assert.throws(() => testValidateFieldSpecs(null), TypeError, 'null powinien rzucić TypeError');
   assert.throws(() => testValidateFieldSpecs('invalid'), TypeError, 'string powinien rzucić TypeError');
+  assert.throws(() => testValidateFieldSpecs([1, 2, 3]), TypeError, 'tablica powinna rzucić TypeError');
 });
 
 console.log(`\n=================================================`);

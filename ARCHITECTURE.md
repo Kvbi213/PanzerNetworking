@@ -1,7 +1,7 @@
 # ARCHITEKTURA SYSTEMU PANZERNETWORKING (PANZER-NET)
 
 > **Status:** AKTYWNY (DIGITAL TWIN OPERATIONAL & PRODUCTION-READY)  
-> **Wersja:** 1.2.1-PROD  
+> **Wersja:** 1.2.2-PROD  
 > **Standard:** Antigravity Protocol (NANO v3.5)  
 > **Stos Technologiczny:** React 19 + TypeScript + Vite 8 + Tailwind CSS + Framer Motion  
 > **Ostatnia aktualizacja:** 2026-10-26  
