@@ -27,21 +27,33 @@ export const SystemExplainer: React.FC = () => {
   );
   const [distKm, setDistKm] = useState<number>(0.25);
 
-  // Calculate Shannon entropy
+  // Calculate Shannon entropy with safe bounds
   const calculateEntropy = (text: string): number => {
     if (!text || text.length === 0) return 0;
+    const safeText = text.slice(0, 10000);
     const freq: Record<string, number> = {};
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
+    for (let i = 0; i < safeText.length; i++) {
+      const c = safeText[i];
       freq[c] = (freq[c] || 0) + 1;
     }
     let h = 0;
-    const len = text.length;
+    const len = safeText.length;
     for (const c in freq) {
       const p = freq[c] / len;
       h -= p * Math.log2(p);
     }
     return h;
+  };
+
+  const handleShannonChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    setShannonText(e.target.value.slice(0, 10000));
+  };
+
+  const handleDistChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const val = parseFloat(e.target.value);
+    if (Number.isFinite(val) && val >= 0.05 && val <= 10.0) {
+      setDistKm(val);
+    }
   };
 
   const entropyValue = calculateEntropy(shannonText);
@@ -336,7 +348,8 @@ export const SystemExplainer: React.FC = () => {
                 </p>
                 <textarea
                   value={shannonText}
-                  onChange={(e) => setShannonText(e.target.value)}
+                  onChange={handleShannonChange}
+                  aria-label="Ciąg znaków do analizy entropii Shannona"
                   className="w-full h-20 p-2.5 rounded-xl bg-black/50 border border-white/10 text-slate-200 resize-none outline-none focus:border-panzer-purple/50"
                 />
                 <div className="flex gap-2">
@@ -348,6 +361,7 @@ export const SystemExplainer: React.FC = () => {
                         ).join('')
                       )
                     }
+                    aria-label="Wygeneruj pseudolosowy strumień szyfrowany"
                     className="px-3 py-1.5 rounded-lg bg-panzer-purple/20 text-panzer-purple border border-panzer-purple/40 text-[11px] font-bold btn-press"
                   >
                     GENERUJ STRUMIEŃ SZYFROWANY (&gt;7.999 b/B)
@@ -379,7 +393,8 @@ export const SystemExplainer: React.FC = () => {
                     max={3.0}
                     step={0.05}
                     value={distKm}
-                    onChange={(e) => setDistKm(parseFloat(e.target.value))}
+                    onChange={handleDistChange}
+                    aria-label="Suwak odległości łącza 60 GHz"
                     className="w-full accent-panzer-cyan"
                   />
                 </div>

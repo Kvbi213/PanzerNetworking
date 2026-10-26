@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; frame-ancestors 'none';" />
   <title>PanzerNetworking :: Kompendium Architektury &amp; Master Explainer (v1.2.0-PROD)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>" />
   <meta name="description" content="Interaktywny system wyjasniajacy architekture PanzerNetworking: 6-wezlowy tranzyt L1-L7, kaskada matrioszki, modul kameleon, matematyka Poissona i Shannona, bilans lacza 60 GHz." />
@@ -688,10 +689,10 @@
             <p style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 0.75rem;">
               Formuła: H(X) = - &Sigma; P(x) * log2(P(x)). Wartość &gt; 7.999 oznacza brak powtarzalnych wzorców statystycznych dla systemów DPI.
             </p>
-            <textarea id="entropy-input" style="width: 100%; height: 90px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 0.75rem; padding: 0.5rem; resize: none; margin-bottom: 0.75rem;" placeholder="Wklej dowolny tekst lub kliknij 'Generuj Strumień Szyfrowany'...">G7b$K9!xQ2#Lp90zZ&1*vNm8@5rT+wYq3!pLx9#mK4$zQ8&v</textarea>
+            <textarea id="entropy-input" aria-label="Tekst wejściowy do analizy entropii Shannona" style="width: 100%; height: 90px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 0.75rem; padding: 0.5rem; resize: none; margin-bottom: 0.75rem;" placeholder="Wklej dowolny tekst lub kliknij 'Generuj Strumień Szyfrowany'...">G7b$K9!xQ2#Lp90zZ&1*vNm8@5rT+wYq3!pLx9#mK4$zQ8&v</textarea>
             <div style="display: flex; gap: 0.5rem;">
-              <button id="btn-entropy-calc" class="btn-tactile btn-primary">OBLICZ ENTROPIĘ</button>
-              <button id="btn-entropy-mock" class="btn-tactile">GENERUJ SZYFR PANZERNET</button>
+              <button id="btn-entropy-calc" aria-label="Oblicz entropię Shannona" class="btn-tactile btn-primary">OBLICZ ENTROPIĘ</button>
+              <button id="btn-entropy-mock" aria-label="Generuj losowy szyfr PanzerNetworking" class="btn-tactile">GENERUJ SZYFR PANZERNET</button>
             </div>
           </div>
 
@@ -709,7 +710,7 @@
                 <span style="color: var(--text-muted);">Dystans d:</span>
                 <span id="dist-label" style="color: var(--accent-cyan); font-weight: 700;">0.25 km (250 m)</span>
               </div>
-              <input type="range" id="dist-slider" min="0.05" max="3.0" step="0.05" value="0.25" />
+              <input type="range" id="dist-slider" aria-label="Suwak odległości łącza 60 GHz w kilometrach" min="0.05" max="3.0" step="0.05" value="0.25" />
             </div>
             <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">
               <span>Tłumienie tlenowe: </span><span id="o2-loss-label" style="color: var(--accent-rose); font-weight: 700;">4.0 dB</span> |
@@ -908,6 +909,19 @@
        ============================================================= -->
   <script>
     // -------------------------------------------------------------
+    // 0. SECURITY: STRICT INPUT SANITIZATION
+    // -------------------------------------------------------------
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // -------------------------------------------------------------
     // 1. DATA: 6 TRANSIT NODES SPECIFICATION
     // -------------------------------------------------------------
     const TRANSIT_NODES = [
@@ -1076,10 +1090,10 @@
         btn.style.width = '100%';
         btn.innerHTML = `
           <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-            <span style="font-weight: 800; color: ${idx === currentActiveHop ? 'var(--accent-cyan)' : '#fff'};">${node.short}</span>
-            <span style="font-size: 0.65rem; color: var(--text-dim);">${node.layer.split(' ')[0]}</span>
+            <span style="font-weight: 800; color: ${idx === currentActiveHop ? 'var(--accent-cyan)' : '#fff'};">${escapeHtml(node.short)}</span>
+            <span style="font-size: 0.65rem; color: var(--text-dim);">${escapeHtml(node.layer.split(' ')[0])}</span>
           </div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${node.name.split(' (')[0]}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(node.name.split(' (')[0])}</div>
         `;
         btn.addEventListener('click', () => {
           currentActiveHop = idx;
@@ -1096,31 +1110,31 @@
       card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
           <div>
-            <div class="tag-label" style="color: var(--accent-cyan);">SPECYFIKACJA WĘZŁA :: HOP ${n.id}</div>
-            <h3 style="font-size: 1.25rem; color: #fff;">${n.name}</h3>
+            <div class="tag-label" style="color: var(--accent-cyan);">SPECYFIKACJA WĘZŁA :: HOP ${escapeHtml(n.id)}</div>
+            <h3 style="font-size: 1.25rem; color: #fff;">${escapeHtml(n.name)}</h3>
           </div>
           <span class="tag-label" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px;">
-            LATENCJA RTT: ${n.latency}
+            LATENCJA RTT: ${escapeHtml(n.latency)}
           </span>
         </div>
 
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.6;">${n.desc}</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.6;">${escapeHtml(n.desc)}</p>
 
         <div class="grid-2" style="margin-bottom: 1.25rem; font-family: var(--font-mono); font-size: 0.75rem;">
           <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
             <div style="color: var(--accent-amber); font-weight: 700; margin-bottom: 0.5rem;">CO REJESTRUJE OBSERWATOR NA TYM ETAPIE:</div>
-            ${Object.entries(n.visible).map(([k, v]) => `<div><span style="color: var(--text-dim);">${k}:</span> <span style="color: #cbd5e1;">${v}</span></div>`).join('')}
+            ${Object.entries(n.visible).map(([k, v]) => `<div><span style="color: var(--text-dim);">${escapeHtml(k)}:</span> <span style="color: #cbd5e1;">${escapeHtml(v)}</span></div>`).join('')}
           </div>
 
           <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
             <div style="color: var(--accent-emerald); font-weight: 700; margin-bottom: 0.5rem;">CZEGO MATEMATYCZNIE NIE JEST W STANIE USTALIĆ:</div>
-            ${Object.entries(n.hidden).map(([k, v]) => `<div><span style="color: var(--text-dim);">${k}:</span> <span style="color: var(--accent-emerald);">${v}</span></div>`).join('')}
+            ${Object.entries(n.hidden).map(([k, v]) => `<div><span style="color: var(--text-dim);">${escapeHtml(k)}:</span> <span style="color: var(--accent-emerald);">${escapeHtml(v)}</span></div>`).join('')}
           </div>
         </div>
 
         <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);">
-          <span>ŚRODOWISKO SPRZĘTOWE: </span><span style="color: #fff;">${n.hardware}</span> |
-          <span>WARSTWA OSI: </span><span style="color: var(--accent-cyan);">${n.layer}</span>
+          <span>ŚRODOWISKO SPRZĘTOWE: </span><span style="color: #fff;">${escapeHtml(n.hardware)}</span> |
+          <span>WARSTWA OSI: </span><span style="color: var(--accent-cyan);">${escapeHtml(n.layer)}</span>
         </div>
       `;
     }
@@ -1199,22 +1213,22 @@
 
       card.innerHTML = `
         <div class="tag-label" style="color: var(--accent-purple); margin-bottom: 0.25rem;">POWŁOKA KASKADY (MATRIOSZKA)</div>
-        <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 0.75rem;">${s.name}</h3>
+        <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 0.75rem;">${escapeHtml(s.name)}</h3>
 
         <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); space-y: 0.5rem; margin-bottom: 1rem;">
-          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Algorytm:</strong> ${s.algo}</div>
-          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Rozmiar Klucza:</strong> ${s.keysize}</div>
-          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Fundament Matematyczny:</strong> ${s.math}</div>
+          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Algorytm:</strong> ${escapeHtml(s.algo)}</div>
+          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Rozmiar Klucza:</strong> ${escapeHtml(s.keysize)}</div>
+          <div style="margin-bottom: 4px;"><strong style="color: #fff;">Fundament Matematyczny:</strong> ${escapeHtml(s.math)}</div>
         </div>
 
         <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); padding: 0.75rem; border-radius: 8px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-cyan); overflow-x: auto; margin-bottom: 1rem;">
-          <code>${s.formula}</code>
+          <code>${escapeHtml(s.formula)}</code>
         </div>
 
         <div style="font-family: var(--font-mono); font-size: 0.75rem;">
           <div style="color: var(--accent-emerald); font-weight: 700; margin-bottom: 0.4rem;">GWARANCJE BEZPIECZEŃSTWA:</div>
           <ul style="list-style: none; padding-left: 0;">
-            ${s.features.map(f => `<li style="margin-bottom: 4px; color: var(--text-muted);"><span style="color: var(--accent-emerald);">[+]</span> ${f}</li>`).join('')}
+            ${s.features.map(f => `<li style="margin-bottom: 4px; color: var(--text-muted);"><span style="color: var(--accent-emerald);">[+]</span> ${escapeHtml(f)}</li>`).join('')}
           </ul>
         </div>
       `;
@@ -1254,28 +1268,28 @@
       const card = document.getElementById('persona-details-card');
 
       card.innerHTML = `
-        <h3 style="font-size: 1.15rem; color: var(--accent-amber); margin-bottom: 0.5rem;">${p.title}</h3>
-        <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">${p.target}</p>
+        <h3 style="font-size: 1.15rem; color: var(--accent-amber); margin-bottom: 0.5rem;">${escapeHtml(p.title)}</h3>
+        <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">${escapeHtml(p.target)}</p>
 
         <div class="grid-2" style="font-family: var(--font-mono); font-size: 0.75rem;">
           <div style="background: rgba(0,0,0,0.4); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
             <strong style="color: #fff;">Trasa i IP Wyjściowe:</strong>
-            <p style="color: var(--text-muted); margin-top: 4px;">${p.route}</p>
+            <p style="color: var(--text-muted); margin-top: 4px;">${escapeHtml(p.route)}</p>
           </div>
 
           <div style="background: rgba(0,0,0,0.4); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
             <strong style="color: #fff;">Maskowanie Canvas & WebGL:</strong>
-            <p style="color: var(--text-muted); margin-top: 4px;">${p.canvas}</p>
+            <p style="color: var(--text-muted); margin-top: 4px;">${escapeHtml(p.canvas)}</p>
           </div>
 
           <div style="background: rgba(0,0,0,0.4); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
             <strong style="color: #fff;">Blokada WebRTC & DNS Leak:</strong>
-            <p style="color: var(--text-muted); margin-top: 4px;">${p.webrtc}</p>
+            <p style="color: var(--text-muted); margin-top: 4px;">${escapeHtml(p.webrtc)}</p>
           </div>
 
           <div style="background: rgba(0,0,0,0.4); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-subtle);">
             <strong style="color: #fff;">Biometria Pisania (Keystroke):</strong>
-            <p style="color: var(--text-muted); margin-top: 4px;">${p.keystroke}</p>
+            <p style="color: var(--text-muted); margin-top: 4px;">${escapeHtml(p.keystroke)}</p>
           </div>
         </div>
       `;
@@ -1293,7 +1307,8 @@
     // -------------------------------------------------------------
     // 8. UI CONTROLLER: SHANNON ENTROPY & 60 GHz CALCULATORS
     // -------------------------------------------------------------
-    function calculateShannonEntropy(text) {
+    function calculateShannonEntropy(rawText) {
+      const text = String(rawText || '').slice(0, 50000);
       if (!text || text.length === 0) return 0;
       const freq = {};
       for (let i = 0; i < text.length; i++) {
@@ -1329,7 +1344,8 @@
     // 60 GHz Link Budget Slider
     const distSlider = document.getElementById('dist-slider');
     distSlider.addEventListener('input', (e) => {
-      const d = parseFloat(e.target.value);
+      const raw = parseFloat(e.target.value);
+      const d = (Number.isFinite(raw) && raw >= 0.05 && raw <= 10.0) ? raw : 0.25;
       document.getElementById('dist-label').textContent = `${d.toFixed(2)} km (${Math.round(d * 1000)} m)`;
 
       // FSPL at 60 GHz: 92.45 + 20*log10(60) + 20*log10(d) = 92.45 + 35.56 + 20*log10(d) = 128.01 + 20*log10(d)
@@ -1380,7 +1396,14 @@
       ];
     }
 
+    let simAnimId = null;
+
     function simLoop(currentTime) {
+      if (document.hidden) {
+        simAnimId = null;
+        return;
+      }
+
       const delta = (currentTime - lastSimTime) / 1000;
       lastSimTime = currentTime;
 
@@ -1504,10 +1527,36 @@
         ctx.fillText(n.label, n.x, n.y + (isBuffer ? 44 : 32));
       });
 
-      requestAnimationFrame(simLoop);
+      simAnimId = requestAnimationFrame(simLoop);
     }
 
-    requestAnimationFrame(simLoop);
+    function startSim() {
+      if (!simAnimId) {
+        lastSimTime = performance.now();
+        simAnimId = requestAnimationFrame(simLoop);
+      }
+    }
+
+    function stopSim() {
+      if (simAnimId) {
+        cancelAnimationFrame(simAnimId);
+        simAnimId = null;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopSim();
+      } else {
+        startSim();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      stopSim();
+    });
+
+    startSim();
 
     document.getElementById('sim-btn-pause').addEventListener('click', (e) => {
       simPaused = !simPaused;
