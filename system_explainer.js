@@ -368,89 +368,103 @@ const FRAME_FIELDS = {
   }
 };
 
+const DEFAULT_FIELD_SPECS = Object.freeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+
 /**
  * Generuje pojedynczy pseudolosowy bajt hex (2 znaki) z wykorzystaniem CSPRNG przeglądarki.
  * @returns {string} Dwuznakowy ciąg hex bajtu [00..ff]
  */
 function generateRandomByteHex() {
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-    const arr = new Uint8Array(1);
-    window.crypto.getRandomValues(arr);
-    return arr[0].toString(16).padStart(2, '0');
+  try {
+    if (
+      typeof window !== 'undefined' &&
+      window.crypto &&
+      typeof window.crypto.getRandomValues === 'function'
+    ) {
+      const arr = new Uint8Array(1);
+      window.crypto.getRandomValues(arr);
+      return arr[0].toString(16).padStart(2, '0');
+    }
+  } catch (err) {
+    console.warn(`[!] Ostrzeżenie CSPRNG: ${err.message}`);
   }
+
   const hexChars = "0123456789abcdef";
   return hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)];
 }
 
 /**
  * Weryfikuje specyfikację rozmiarów nagłówków ramki transportowej 1400 B.
- * @param {object} [specs] - Opcjonalny obiekt specyfikacji pól nagłówkowych {tls, nonce, inner, mac}.
- * @returns {boolean} true jeśli suma wynosi dokładnie 65 B, w przeciwnym razie false.
+ * @param {object} [specs=DEFAULT_FIELD_SPECS] - Obiekt specyfikacji pól nagłówkowych {tls, nonce, inner, mac}.
+ * @returns {boolean} true jeśli suma wynosi dokładnie 65 B, rzuca Error przy niezgodności.
  */
-function validateFieldSpecs(specs = { tls: 5, nonce: 24, inner: 4, mac: 32 }) {
-  try {
-    if (!specs || typeof specs !== 'object') return false;
-    const headerTotal =
-      Number(specs.tls ?? 0) +
-      Number(specs.nonce ?? 0) +
-      Number(specs.inner ?? 0) +
-      Number(specs.mac ?? 0);
-
-    if (headerTotal !== 65) {
-      console.error(`[!] BŁĄD INTEGRALNOŚCI: Suma nagłówków wynosi ${headerTotal} B zamiast 65 B`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[!] BŁĄD WALIDACJI nagłówków: ${err ? err.message : String(err)}`);
-    return false;
+function validateFieldSpecs(specs = DEFAULT_FIELD_SPECS) {
+  if (!specs || typeof specs !== 'object') {
+    throw new TypeError('Specyfikacja pól nagłówka musi być obiektem.');
   }
+
+  const headerTotal =
+    Number(specs.tls ?? 0) +
+    Number(specs.nonce ?? 0) +
+    Number(specs.inner ?? 0) +
+    Number(specs.mac ?? 0);
+
+  if (headerTotal !== 65) {
+    throw new Error(
+      `Błąd integralności nagłówków: suma wynosi ${headerTotal} B, oczekiwano 65 B. Spec: ${JSON.stringify(specs)}`
+    );
+  }
+  return true;
 }
 
-function generateFrameData(isChaff) {
-  try {
-    if (!validateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 })) {
-      return { hex: 'ERROR: Niezgodność specyfikacji nagłówków ramki 1400 B', ascii: '|ERROR|' };
-    }
-    const hexLines = [];
-    const asciiLines = [];
-
-    if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
-      cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);
-    }
-
-    for (let row = 0; row < 8; row++) {
-      const offset = (row * 16).toString(16).padStart(4, '0');
-      const bytes = [];
-      let ascii = "";
-
-      for (let col = 0; col < 16; col++) {
-        const byteIdx = row * 16 + col;
-        let bHex = cachedFrameRandomBytes[byteIdx] || "00";
-
-        if (byteIdx === 0) bHex = "17"; // TLS 1.3 Application Data
-        else if (byteIdx === 1) bHex = "03"; // TLS Major
-        else if (byteIdx === 2) bHex = "03"; // TLS Minor
-        else if (byteIdx === 3) bHex = "05"; // Length high
-        else if (byteIdx === 4) bHex = "73"; // Length low (1395 B)
-        else if (byteIdx === 28) bHex = isChaff ? "ff" : "01"; // Inner Packet Type
-        else if (byteIdx === 29) bHex = "05"; // Payload length high
-        else if (byteIdx === 30) bHex = "2a"; // Payload length low
-
-        bytes.push(bHex);
-        const bVal = parseInt(bHex, 16);
-        ascii += (bVal >= 32 && bVal <= 126) ? String.fromCharCode(bVal) : ".";
-      }
-
-      hexLines.push(`${offset}  ${bytes.slice(0, 8).join(' ')}  ${bytes.slice(8).join(' ')}`);
-      asciiLines.push(`|${ascii}|`);
-    }
-
-    return { hex: hexLines.join('\n'), ascii: asciiLines.join('\n') };
-  } catch (err) {
-    console.error('[!] Błąd generowania ramki Wireshark:', err);
-    return { hex: '0000  17 03 03 05 73 [BŁĄD PARSOWANIA]', ascii: '|.....|' };
+/**
+ * Generuje dane ramki dla podglądu heksadecymalnego Wireshark.
+ * @param {boolean} [isChaff=false] - Flaga oznaczająca pakiet pozorny (Dummy Chaff 0xFF)
+ * @param {object} [specs=DEFAULT_FIELD_SPECS] - Opcjonalna specyfikacja pól nagłówka
+ * @returns {{hex: string, ascii: string}}
+ */
+function generateFrameData(isChaff = false, specs = DEFAULT_FIELD_SPECS) {
+  if (typeof isChaff !== 'boolean') {
+    throw new TypeError('Parametr isChaff musi być typu boolean');
   }
+
+  validateFieldSpecs(specs);
+
+  if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
+    cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);
+  }
+
+  const hexLines = [];
+  const asciiLines = [];
+
+  for (let row = 0; row < 8; row++) {
+    const offset = (row * 16).toString(16).padStart(4, '0');
+    const bytes = [];
+    let ascii = "";
+
+    for (let col = 0; col < 16; col++) {
+      const byteIdx = row * 16 + col;
+      let bHex = cachedFrameRandomBytes[byteIdx] || "00";
+
+      if (byteIdx === 0) bHex = "17"; // TLS 1.3 Application Data
+      else if (byteIdx === 1) bHex = "03"; // TLS Major
+      else if (byteIdx === 2) bHex = "03"; // TLS Minor
+      else if (byteIdx === 3) bHex = "05"; // Length high
+      else if (byteIdx === 4) bHex = "73"; // Length low (1395 B)
+      else if (byteIdx === 28) bHex = isChaff ? "ff" : "01"; // Inner Packet Type
+      else if (byteIdx === 29) bHex = "05"; // Payload length high
+      else if (byteIdx === 30) bHex = "2a"; // Payload length low
+
+      bytes.push(bHex);
+      const bVal = parseInt(bHex, 16);
+      ascii += (bVal >= 32 && bVal <= 126) ? String.fromCharCode(bVal) : ".";
+    }
+
+    hexLines.push(`${offset}  ${bytes.slice(0, 8).join(' ')}  ${bytes.slice(8).join(' ')}`);
+    asciiLines.push(`|${ascii}|`);
+  }
+
+  return { hex: hexLines.join('\n'), ascii: asciiLines.join('\n') };
 }
 
 function renderFrameFieldInspector(fieldKey) {
@@ -526,11 +540,17 @@ function renderFrameFieldInspector(fieldKey) {
 }
 
 function updateWiresharkDump() {
-  const data = generateFrameData(isChaffFrame);
-  const hexEl = document.getElementById('raw-hex-dump');
-  const asciiEl = document.getElementById('raw-ascii-dump');
-  if (hexEl) hexEl.textContent = data.hex;
-  if (asciiEl) asciiEl.textContent = data.ascii;
+  try {
+    const data = generateFrameData(isChaffFrame, DEFAULT_FIELD_SPECS);
+    const hexEl = document.getElementById('raw-hex-dump');
+    const asciiEl = document.getElementById('raw-ascii-dump');
+    if (hexEl) hexEl.textContent = data.hex;
+    if (asciiEl) asciiEl.textContent = data.ascii;
+  } catch (err) {
+    console.error('[!] Błąd generowania ramki Wireshark:', err);
+    const hexEl = document.getElementById('raw-hex-dump');
+    if (hexEl) hexEl.textContent = '0000  17 03 03 05 73 [BŁĄD PARSOWANIA RAMKI]';
+  }
 }
 
 function initWiresharkDissector() {
