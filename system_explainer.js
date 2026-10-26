@@ -368,16 +368,34 @@ const FRAME_FIELDS = {
   }
 };
 
+/**
+ * Generuje pojedynczy pseudolosowy bajt hex (2 znaki) z wykorzystaniem CSPRNG przeglądarki.
+ * @returns {string} Dwuznakowy ciąg hex bajtu [00..ff]
+ */
 function generateRandomByteHex() {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const arr = new Uint8Array(1);
+    window.crypto.getRandomValues(arr);
+    return arr[0].toString(16).padStart(2, '0');
+  }
   const hexChars = "0123456789abcdef";
   return hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)];
 }
 
-function validateFieldSpecs() {
+/**
+ * Weryfikuje specyfikację rozmiarów nagłówków ramki transportowej 1400 B.
+ * @param {object} [specs] - Opcjonalny obiekt specyfikacji pól nagłówkowych {tls, nonce, inner, mac}.
+ * @returns {boolean} true jeśli suma wynosi dokładnie 65 B, w przeciwnym razie false.
+ */
+function validateFieldSpecs(specs = { tls: 5, nonce: 24, inner: 4, mac: 32 }) {
   try {
-    const specs = { tls: 5, nonce: 24, inner: 4, mac: 32 };
     if (!specs || typeof specs !== 'object') return false;
-    const headerTotal = Number(specs.tls || 0) + Number(specs.nonce || 0) + Number(specs.inner || 0) + Number(specs.mac || 0);
+    const headerTotal =
+      Number(specs.tls ?? 0) +
+      Number(specs.nonce ?? 0) +
+      Number(specs.inner ?? 0) +
+      Number(specs.mac ?? 0);
+
     if (headerTotal !== 65) {
       console.error(`[!] BŁĄD INTEGRALNOŚCI: Suma nagłówków wynosi ${headerTotal} B zamiast 65 B`);
       return false;
@@ -391,17 +409,14 @@ function validateFieldSpecs() {
 
 function generateFrameData(isChaff) {
   try {
-    if (!validateFieldSpecs()) {
+    if (!validateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 })) {
       return { hex: 'ERROR: Niezgodność specyfikacji nagłówków ramki 1400 B', ascii: '|ERROR|' };
     }
     const hexLines = [];
     const asciiLines = [];
 
     if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
-      cachedFrameRandomBytes = [];
-      for (let i = 0; i < 128; i++) {
-        cachedFrameRandomBytes.push(generateRandomByteHex());
-      }
+      cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);
     }
 
     for (let row = 0; row < 8; row++) {

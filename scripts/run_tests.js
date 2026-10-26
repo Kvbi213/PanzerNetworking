@@ -12,13 +12,11 @@ console.log('--- ROZPOCZĘCIE AUDYTU TESTÓW JEDNOSTKOWYCH I INTEGRACYJNYCH PANZ
 function readFileSafe(filePath, description) {
   try {
     if (!fs.existsSync(filePath)) {
-      console.error(`[-] BŁĄD KRYTYCZNY :: Plik ${description} (${filePath}) nie istnieje w systemie plików.`);
-      process.exit(1);
+      throw new Error(`Plik ${description} (${filePath}) nie istnieje w systemie plików.`);
     }
     return fs.readFileSync(filePath, 'utf-8');
   } catch (err) {
-    console.error(`[-] BŁĄD KRYTYCZNY :: Nie udało się odczytać ${description}: ${err.message}`);
-    process.exit(1);
+    throw new Error(`Nie udało się odczytać ${description}: ${err.message}`);
   }
 }
 
@@ -60,6 +58,8 @@ runTest('Zero innerHTML & eval in system_explainer.js (Strict XSS Immunity)', ()
 runTest('Strict Content Security Policy without unsafe-inline in system_explainer.html', () => {
   const htmlContent = readFileSafe(path.join(rootDir, 'system_explainer.html'), 'system_explainer.html');
   assert.ok(/<meta http-equiv="Content-Security-Policy"[^>]*content="[^"]*"/i.test(htmlContent), 'Brak nagłówka CSP meta w system_explainer.html');
+  assert.ok(htmlContent.includes("default-src 'self'"), "Brak dyrektywy default-src 'self' w CSP");
+  assert.ok(htmlContent.includes("object-src 'none'"), "Brak dyrektywy object-src 'none' w CSP");
   assert.strictEqual(htmlContent.includes("'unsafe-inline'"), false, 'Wykryto niebezpieczną dyrektywę unsafe-inline w CSP!');
   assert.strictEqual(htmlContent.includes('<link rel="stylesheet" href="system_explainer.css"'), true, 'Arkusz stylów nie jest poprawnie zlinkowany');
   assert.strictEqual(htmlContent.includes('<script src="system_explainer.js" defer></script>'), true, 'Skrypt nie jest poprawnie zlinkowany');
