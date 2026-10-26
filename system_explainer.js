@@ -368,7 +368,43 @@ const FRAME_FIELDS = {
   }
 };
 
-const DEFAULT_FIELD_SPECS = Object.freeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+/**
+ * Głęboko zamraża obiekt i jego właściwości, uniemożliwiając mutację w głąb.
+ * @param {object} obj - Obiekt do zamrożenia
+ * @returns {object} Zamrożony obiekt
+ */
+function deepFreeze(obj) {
+  if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+    Object.freeze(obj);
+    Object.getOwnPropertyNames(obj).forEach(prop => {
+      deepFreeze(obj[prop]);
+    });
+  }
+  return obj;
+}
+
+const DEFAULT_FIELD_SPECS = deepFreeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+
+/**
+ * Waliduje i zwraca niezmienny zestaw specyfikacji nagłówków ramki.
+ * @param {object} [rawSpecs=DEFAULT_FIELD_SPECS] - Specyfikacja pól nagłówkowych
+ * @returns {object} Zwalidowany, głęboko zamrożony obiekt specyfikacji
+ */
+function createFieldSpecs(rawSpecs = DEFAULT_FIELD_SPECS) {
+  if (!rawSpecs || typeof rawSpecs !== 'object' || Array.isArray(rawSpecs)) {
+    throw new TypeError('Parametr specs musi być obiektem specyfikacji.');
+  }
+
+  const merged = deepFreeze({
+    tls: Number(rawSpecs.tls ?? DEFAULT_FIELD_SPECS.tls),
+    nonce: Number(rawSpecs.nonce ?? DEFAULT_FIELD_SPECS.nonce),
+    inner: Number(rawSpecs.inner ?? DEFAULT_FIELD_SPECS.inner),
+    mac: Number(rawSpecs.mac ?? DEFAULT_FIELD_SPECS.mac)
+  });
+
+  validateFieldSpecs(merged);
+  return merged;
+}
 
 /**
  * Generuje pojedynczy pseudolosowy bajt hex (2 znaki) z wykorzystaniem CSPRNG przeglądarki.
@@ -427,12 +463,9 @@ function generateFrameData(isChaff = false, specs = DEFAULT_FIELD_SPECS) {
   if (typeof isChaff !== 'boolean') {
     throw new TypeError('Parametr isChaff musi być typu boolean');
   }
-  if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
-    throw new TypeError('Parametr specs musi być obiektem specyfikacji.');
-  }
 
-  const frozenSpecs = Object.freeze({ ...specs });
-  validateFieldSpecs(frozenSpecs);
+  const validatedSpecs = (specs === DEFAULT_FIELD_SPECS) ? DEFAULT_FIELD_SPECS : createFieldSpecs(specs);
+  validateFieldSpecs(validatedSpecs);
 
   if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
     cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);

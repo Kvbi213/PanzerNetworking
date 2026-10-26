@@ -126,7 +126,17 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
 
 // TEST 7: Frame Dissector Logic & Field Validation Robustness
 runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
-  const DEFAULT_SPECS = Object.freeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+  function deepFreeze(obj) {
+    if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+      Object.freeze(obj);
+      Object.getOwnPropertyNames(obj).forEach(prop => {
+        deepFreeze(obj[prop]);
+      });
+    }
+    return obj;
+  }
+
+  const DEFAULT_SPECS = deepFreeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
 
   function testValidateFieldSpecs(specs = DEFAULT_SPECS) {
     if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
@@ -144,8 +154,25 @@ runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
     return true;
   }
 
+  function testCreateFieldSpecs(rawSpecs = DEFAULT_SPECS) {
+    if (!rawSpecs || typeof rawSpecs !== 'object' || Array.isArray(rawSpecs)) {
+      throw new TypeError('Parametr specs musi być obiektem specyfikacji.');
+    }
+    const merged = deepFreeze({
+      tls: Number(rawSpecs.tls ?? DEFAULT_SPECS.tls),
+      nonce: Number(rawSpecs.nonce ?? DEFAULT_SPECS.nonce),
+      inner: Number(rawSpecs.inner ?? DEFAULT_SPECS.inner),
+      mac: Number(rawSpecs.mac ?? DEFAULT_SPECS.mac)
+    });
+    testValidateFieldSpecs(merged);
+    return merged;
+  }
+
   assert.strictEqual(testValidateFieldSpecs(), true, 'Domyślna specyfikacja powinna przejść walidację');
   assert.strictEqual(testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 }), true, 'Standardowe nagłówki powinny przejść walidację');
+  assert.strictEqual(Object.isFrozen(DEFAULT_SPECS), true, 'DEFAULT_SPECS musi być zamrożony');
+  const customSpecs = testCreateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+  assert.strictEqual(Object.isFrozen(customSpecs), true, 'createFieldSpecs musi zwracać zamrożony obiekt');
   assert.throws(() => testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), /suma nagłówków wynosi/, 'Niekompletne nagłówki powinny rzucić Error');
   assert.throws(() => testValidateFieldSpecs(null), TypeError, 'null powinien rzucić TypeError');
   assert.throws(() => testValidateFieldSpecs('invalid'), TypeError, 'string powinien rzucić TypeError');
