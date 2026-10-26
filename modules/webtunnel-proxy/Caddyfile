@@ -1,0 +1,37 @@
+# PanzerNetworking Node 4: WebTunnel Reverse Proxy Configuration (Caddyfile)
+# Domain configured via Let's Encrypt automated TLS
+
+example-tech-blog.org {
+    # Public cover site (Technical Documentation / Blog)
+    root * /var/www/cover-html
+    file_server
+
+    # Secret WebTunnel WebSocket endpoint
+    @webtunnel {
+        path /api/v2/telemetry/ws
+        header Connection *Upgrade*
+        header Upgrade websocket
+        header X-Panzer-Auth "SECRET_PRESHARED_TOKEN_FROM_ENV"
+    }
+
+    # Reverse proxy genuine tunnel traffic to local Tor daemon SOCKS/WebTunnel port
+    handle @webtunnel {
+        reverse_proxy 127.0.0.1:15000 {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Any probing request receives default cover HTML with HTTP 200 OK
+    handle {
+        try_files {path} /index.html
+    }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        -Server
+    }
+}

@@ -19,3 +19,12 @@
 - `[+]` Wdrożono standard Apple Design: pływająca wyspa szklana z `layoutId`, sprężyny krytycznie tłumione ($\zeta = 1.0$), haptyczna reakcja na dotyk (`scale(0.97)`), materiały translucentne i optyczna typografia.
 - `[+]` Przeprowadzono audyt kodu za pomocą Senior Code Reviewera Groq (`openai/gpt-oss-20b`) i wyeliminowano wszystkie uwagi blokujące.
 - `[*]` Pomyślna weryfikacja kompilacji TypeScript (`npx tsc --noEmit`) oraz produkcyjnego bundla Vite (`npm run build`).
+
+
+## v 1.2.0 — 2026-10-26 (Rewizja Produkcyjna Repozytorium GitHub)
+- `[+]` Zaimplementowano pipeline `.github/workflows/ci-cd.yml` (automatyczny build Vite, TypeScript check, wdrożenie GitHub Pages).
+- `[+]` Dodano plik `LICENSE` (licencja MIT wraz z rygorystyczną klauzulą badawczo-edukacyjną).
+- `[+]` Opracowano pełny profil `README.md` w standardzie publicznym GitHuba (diagramy Mermaid, tabele odporności GPA-R, matryca BOM, specyfikacja ramki 1400 B i instrukcja instalacji).
+- `[+]` Wygenerowano dane laboratoryjne w `/data/`: wyniki testu NIST SP 800-22 (`NIST_SP800_22_RESULTS.json`), raport 24h audytu szczelności Hardware TAP (`ZERO_LEAK_AUDIT_REPORT.md`), raport testu korelacji czasowej KS (`KS_TIMING_CORRELATION_TEST.md`) oraz kosztorys BOM (`BOM_CALCULATION.md`).
+- `[+]` Zaimplementowano moduły Fazy 2: szablon Węzła 2 Cloudflare Worker (`modules/camouflage-worker/worker.js`), konfigurację Węzła 4 Caddy/Nginx WebTunnel (`modules/webtunnel-proxy/`) oraz szkielet demona CLI w języku Rust (`modules/panzer-core/`).
+- `[*]` Zaktualizowano rejestr komponentów i dług techniczny w `ARCHITECTURE.md`.
