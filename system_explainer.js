@@ -431,7 +431,8 @@ function generateFrameData(isChaff = false, specs = DEFAULT_FIELD_SPECS) {
     throw new TypeError('Parametr specs musi być obiektem specyfikacji.');
   }
 
-  validateFieldSpecs(specs);
+  const frozenSpecs = Object.freeze({ ...specs });
+  validateFieldSpecs(frozenSpecs);
 
   if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
     cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);
