@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "build:css": "node -e \"const fs=require('fs');let c=fs.readFileSync('system_explainer.css','utf8').replace(/\\/\\*[\\s\\S]*?\\*\\//g,'').replace(/\\s+/g,' ').replace(/\\s*([:;{}])\\s*/g,'$1').trim();fs.writeFileSync('system_explainer.min.css',c);console.log('CSS Minified: '+c.length+' bytes');\"",
     "preview": "vite preview"
   },
   "dependencies": {

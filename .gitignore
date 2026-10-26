@@ -13,6 +13,7 @@ dist/
 target/
 __pycache__/
 *.pyc
+*.min.css
 
 # Data zones
 data/logs/*
