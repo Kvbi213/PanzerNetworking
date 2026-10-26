@@ -126,16 +126,18 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
 
 // TEST 7: Frame Dissector Logic & Field Validation Robustness
 runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
-  function deepFreeze(obj) {
+  function deepFreeze(obj, seen = new WeakSet()) {
     if (obj === null || typeof obj !== 'object') {
       throw new TypeError('deepFreeze expects an object');
     }
+    if (seen.has(obj)) return obj;
+    seen.add(obj);
     if (Object.isFrozen(obj)) return obj;
     Object.freeze(obj);
     Object.getOwnPropertyNames(obj).forEach(prop => {
       const val = obj[prop];
       if (val !== null && typeof val === 'object') {
-        deepFreeze(val);
+        deepFreeze(val, seen);
       }
     });
     return obj;
@@ -179,7 +181,19 @@ runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
   const customSpecs = testCreateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 });
   assert.strictEqual(Object.isFrozen(customSpecs), true, 'createFieldSpecs musi zwracać zamrożony obiekt');
   assert.throws(() => deepFreeze(null), TypeError, 'deepFreeze(null) musi rzucić TypeError');
+  assert.throws(() => deepFreeze(undefined), TypeError, 'deepFreeze(undefined) musi rzucić TypeError');
   assert.throws(() => deepFreeze('primitive'), TypeError, 'deepFreeze(string) musi rzucić TypeError');
+
+  // Obiekt z zagnieżdżoną tablicą
+  const objWithArray = { arr: [{ a: 1 }], b: 2 };
+  const frozenArrObj = deepFreeze(objWithArray);
+  assert.strictEqual(Object.isFrozen(frozenArrObj.arr[0]), true, 'Elementy tablicy muszą być głęboko zamrożone');
+
+  // Obiekt cykliczny (odporność na stack overflow)
+  const cyclic = {};
+  cyclic.self = cyclic;
+  assert.doesNotThrow(() => deepFreeze(cyclic), 'deepFreeze nie powinien rzucić błędu dla obiektów cyklicznych');
+
   assert.throws(() => testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), /suma nagłówków wynosi/, 'Niekompletne nagłówki powinny rzucić Error');
   assert.throws(() => testValidateFieldSpecs(null), TypeError, 'null powinien rzucić TypeError');
   assert.throws(() => testValidateFieldSpecs('invalid'), TypeError, 'string powinien rzucić TypeError');

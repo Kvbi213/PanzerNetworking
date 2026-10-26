@@ -369,21 +369,24 @@ const FRAME_FIELDS = {
 };
 
 /**
- * Głęboko zamraża obiekt i jego właściwości, uniemożliwiając mutację w głąb.
+ * Głęboko zamraża obiekt i jego właściwości, uniemożliwiając mutację w głąb (odporny na referencje cykliczne).
  * @param {object} obj - Obiekt do zamrożenia
+ * @param {WeakSet} [seen=new WeakSet()] - Zbiór odwiedzonych obiektów dla ochrony przed cyklami
  * @returns {object} Zamrożony obiekt
  * @throws {TypeError} Jeśli argument nie jest poprawnym obiektem
  */
-function deepFreeze(obj) {
+function deepFreeze(obj, seen = new WeakSet()) {
   if (obj === null || typeof obj !== 'object') {
     throw new TypeError('deepFreeze expects an object');
   }
+  if (seen.has(obj)) return obj;
+  seen.add(obj);
   if (Object.isFrozen(obj)) return obj;
   Object.freeze(obj);
   Object.getOwnPropertyNames(obj).forEach(prop => {
     const val = obj[prop];
     if (val !== null && typeof val === 'object') {
-      deepFreeze(val);
+      deepFreeze(val, seen);
     }
   });
   return obj;
@@ -471,6 +474,7 @@ function generateFrameData(isChaff = false, specs = DEFAULT_FIELD_SPECS) {
   }
 
   const validatedSpecs = (specs === DEFAULT_FIELD_SPECS) ? DEFAULT_FIELD_SPECS : createFieldSpecs(specs);
+  validateFieldSpecs(validatedSpecs);
 
   if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
     cachedFrameRandomBytes = Array.from({ length: 128 }, generateRandomByteHex);
