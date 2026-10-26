@@ -51,7 +51,7 @@ export const SystemExplainer: React.FC = () => {
 
   const handleDistChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const val = parseFloat(e.target.value);
-    if (Number.isFinite(val) && val >= 0.05 && val <= 10.0) {
+    if (Number.isFinite(val) && val >= 0.05 && val <= 3.0) {
       setDistKm(val);
     }
   };

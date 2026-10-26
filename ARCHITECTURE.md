@@ -26,6 +26,7 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
 ├── core.tsx                         <- Główny punkt wejścia aplikacji React (Apple Design UI)
 ├── index.html                       <- Szkielet HTML5 mountujący drzewo React
 ├── system_explainer.html            <- Samodzielny, interaktywny Master Explainer (Apple Design)
+├── system_explainer.js              <- Kontroler UI z czystym API DOM (Zero innerHTML, strict CSP)
 ├── package.json                     <- Definicja zależności i skryptów budowania
 ├── postcss.config.js                <- Konfiguracja procesora CSS Tailwind
 ├── tailwind.config.js               <- Tokeny kolorystyczne Apple Dark, rozmycia i typografia
@@ -89,7 +90,8 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
 | :--- | :--- | :--- | :--- |
 | `core.ts` | Singleton stanu, pętla telemetrii, obsługa mutacji parametrów | `modules/` | PRODUKCYJNY |
 | `core.tsx` | Nadrzędny komponent React, orkiestracja zakładek z AnimatePresence | `core.ts`, `modules/components/` | PRODUKCYJNY |
-| `system_explainer.html` | Samodzielny, interaktywny Master Explainer w HTML5 (Apple Design) | Brak (Zero-Dep) | PRODUKCYJNY |
+| `system_explainer.html` | Samodzielny, interaktywny Master Explainer w HTML5 (Apple Design) | `system_explainer.js` | PRODUKCYJNY |
+| `system_explainer.js` | Kontroler UI, kalkulatory i symulator cząstek DOM (Zero innerHTML) | Brak (Zero-Dep) | PRODUKCYJNY |
 | `modules/components/SystemExplainer.tsx` | Moduł wyjaśniający cały system (Tab 6 w React) | React, Framer Motion | PRODUKCYJNY |
 | `README.md` | Główna wizytówka na GitHubie, diagramy, live demo, tabele | Wszystkie moduły | PRODUKCYJNY |
 | `LICENSE` | Licencja MIT z klauzulą badawczo-edukacyjną | Brak | PRODUKCYJNY |
