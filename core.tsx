@@ -12,6 +12,7 @@ import { PhysicsSimulator } from './modules/components/PhysicsSimulator';
 import { MatrioszkaCascade } from './modules/components/MatrioszkaCascade';
 import { AttackMatrix } from './modules/components/AttackMatrix';
 import { AuditDefense } from './modules/components/AuditDefense';
+import { SystemExplainer } from './modules/components/SystemExplainer';
 
 const SPRING_TRANSITION = {
   type: 'spring',
@@ -146,6 +147,12 @@ export const App: React.FC = () => {
           {activeTab === 'defense' && (
             <TabSection key="tab-defense">
               <AuditDefense />
+            </TabSection>
+          )}
+
+          {activeTab === 'explainer' && (
+            <TabSection key="tab-explainer">
+              <SystemExplainer />
             </TabSection>
           )}
         </AnimatePresence>

@@ -25,6 +25,7 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
 ├── core.ts                          <- Jądro koordynacji stanu symulatora, telemetrii i event-busa
 ├── core.tsx                         <- Główny punkt wejścia aplikacji React (Apple Design UI)
 ├── index.html                       <- Szkielet HTML5 mountujący drzewo React
+├── system_explainer.html            <- Samodzielny, interaktywny Master Explainer (Apple Design)
 ├── package.json                     <- Definicja zależności i skryptów budowania
 ├── postcss.config.js                <- Konfiguracja procesora CSS Tailwind
 ├── tailwind.config.js               <- Tokeny kolorystyczne Apple Dark, rozmycia i typografia
@@ -60,7 +61,8 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
     │   ├── HeaderStatus.tsx         <- Pasek telemetrii (PPS, entropia H(X), PFS ratchet, selektor persony)
     │   ├── MatrioszkaCascade.tsx    <- Tab 3: Koncentryczny model SVG z dekonstrukcją algebry SPN+ARX
     │   ├── PhysicsSimulator.tsx     <- Tab 2: Silnik Canvas 2D 60 FPS z buforem Poissona i Chaff burst
-    │   └── RouteInspector.tsx       <- Tab 1: Wireshark live inspector 1400 B i dekonstruktor L1–L7
+    │   ├── RouteInspector.tsx       <- Tab 1: Wireshark live inspector 1400 B i dekonstruktor L1–L7
+    │   └── SystemExplainer.tsx      <- Tab 6: Master Explainer & Kompendium (Apple Design)
     ├── crypto/
     │   └── cascade_crypto.ts        <- Obliczanie entropii Shannona, generator ramek 1400 B i hex-dump
     ├── kameleon/
@@ -87,6 +89,8 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
 | :--- | :--- | :--- | :--- |
 | `core.ts` | Singleton stanu, pętla telemetrii, obsługa mutacji parametrów | `modules/` | PRODUKCYJNY |
 | `core.tsx` | Nadrzędny komponent React, orkiestracja zakładek z AnimatePresence | `core.ts`, `modules/components/` | PRODUKCYJNY |
+| `system_explainer.html` | Samodzielny, interaktywny Master Explainer w HTML5 (Apple Design) | Brak (Zero-Dep) | PRODUKCYJNY |
+| `modules/components/SystemExplainer.tsx` | Moduł wyjaśniający cały system (Tab 6 w React) | React, Framer Motion | PRODUKCYJNY |
 | `README.md` | Główna wizytówka na GitHubie, diagramy, live demo, tabele | Wszystkie moduły | PRODUKCYJNY |
 | `LICENSE` | Licencja MIT z klauzulą badawczo-edukacyjną | Brak | PRODUKCYJNY |
 | `.github/workflows/ci-cd.yml` | Pipeline GitHub Actions (typecheck, build, deploy GH Pages) | Node 22 / Vite | PRODUKCYJNY |
@@ -110,3 +114,4 @@ c:\Users\Jakub Lis\Desktop\01_PROJEKTY\SafeNet/
 | DT-004 | Obsidian Sync | Pełna replikacja dokumentacji w `C:\Users\Jakub Lis\Documents\OBSIDIAN\PROJEKTY\PanzerNetworking\` | KRYTYCZNY | ZREALIZOWANO ✅ |
 | DT-005 | Repozytorium GitHub | Kompletny zestaw produkcyjny (CI/CD, LICENSE, README, dane lab, szablony) | WYSOKI | ZREALIZOWANO ✅ |
 | DT-006 | Rust Core | Kompilacja i wdrożenie produkcyjne demona `panzer-core` w Rust | ŚREDNI | SZKIELET WDROŻONY ✅ |
+| DT-007 | Master Explainer | Wdrożenie samodzielnej strony `system_explainer.html` oraz Tab 6 `SystemExplainer.tsx` | KRYTYCZNY | ZREALIZOWANO ✅ |

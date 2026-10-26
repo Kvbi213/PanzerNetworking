@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Route, PlayCircle, Layers, Crosshair, BookOpen } from 'lucide-react';
+import { Route, PlayCircle, Layers, Crosshair, BookOpen, Compass } from 'lucide-react';
 
-export type TabId = 'route' | 'sim' | 'matrioszka' | 'matrix' | 'defense';
+export type TabId = 'route' | 'sim' | 'matrioszka' | 'matrix' | 'defense' | 'explainer';
 
 interface NavItem {
   id: TabId;
@@ -17,6 +17,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { id: 'matrioszka', label: '3. Kaskada Matrioszki', shortLabel: 'Szyfry', icon: Layers },
   { id: 'matrix', label: '4. Wektory Ataku', shortLabel: 'Ataki', icon: Crosshair },
   { id: 'defense', label: '5. Obrona & Audyt', shortLabel: 'Audyt', icon: BookOpen },
+  { id: 'explainer', label: '6. Master Explainer', shortLabel: 'Kompendium', icon: Compass },
 ];
 
 interface FloatingNavProps {

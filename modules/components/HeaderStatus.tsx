@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Activity, KeyRound, Cpu } from 'lucide-react';
+import { Shield, Activity, KeyRound, Cpu, BookOpen } from 'lucide-react';
 import { SimulationParams, SimulationMetrics, PersonaMode } from '../types/simulation';
 
 interface HeaderStatusProps {
@@ -89,30 +89,43 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
           </div>
         </div>
 
-        {/* Chameleon Persona Selector */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10">
-          {(['GHOST', 'BURNER', 'MULTI_PERSONA'] as PersonaMode[]).map((mode) => {
-            const isSelected = params.activePersona === mode;
-            return (
-              <motion.button
-                key={mode}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onSetPersona(mode)}
-                className={`relative px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium transition-colors ${
-                  isSelected ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {isSelected && (
-                  <motion.div
-                    layoutId="activePersonaPill"
-                    transition={{ type: 'spring', damping: 1.0, stiffness: 120 }}
-                    className="absolute inset-0 rounded-lg bg-white/15 border border-white/20 shadow-sm"
-                  />
-                )}
-                <span className="relative z-10">{mode.replace('_', '-')}</span>
-              </motion.button>
-            );
-          })}
+        {/* Chameleon Persona Selector & Explainer Link */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10">
+            {(['GHOST', 'BURNER', 'MULTI_PERSONA'] as PersonaMode[]).map((mode) => {
+              const isSelected = params.activePersona === mode;
+              return (
+                <motion.button
+                  key={mode}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onSetPersona(mode)}
+                  className={`relative px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium transition-colors ${
+                    isSelected ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activePersonaPill"
+                      transition={{ type: 'spring', damping: 1.0, stiffness: 120 }}
+                      className="absolute inset-0 rounded-lg bg-white/15 border border-white/20 shadow-sm"
+                    />
+                  )}
+                  <span className="relative z-10">{mode.replace('_', '-')}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <a
+            href="system_explainer.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Otwórz pełne kompendium architektoniczne w HTML"
+            className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium border border-panzer-cyan/40 bg-panzer-cyan/10 text-panzer-cyan hover:bg-panzer-cyan/20 transition-colors btn-press"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>EXPLAINER HTML</span>
+          </a>
         </div>
       </div>
     </header>

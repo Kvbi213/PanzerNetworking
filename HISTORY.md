@@ -28,3 +28,13 @@
 - `[+]` Wygenerowano dane laboratoryjne w `/data/`: wyniki testu NIST SP 800-22 (`NIST_SP800_22_RESULTS.json`), raport 24h audytu szczelności Hardware TAP (`ZERO_LEAK_AUDIT_REPORT.md`), raport testu korelacji czasowej KS (`KS_TIMING_CORRELATION_TEST.md`) oraz kosztorys BOM (`BOM_CALCULATION.md`).
 - `[+]` Zaimplementowano moduły Fazy 2: szablon Węzła 2 Cloudflare Worker (`modules/camouflage-worker/worker.js`), konfigurację Węzła 4 Caddy/Nginx WebTunnel (`modules/webtunnel-proxy/`) oraz szkielet demona CLI w języku Rust (`modules/panzer-core/`).
 - `[*]` Zaktualizowano rejestr komponentów i dług techniczny w `ARCHITECTURE.md`.
+
+## v 1.2.0 — 2026-10-26 (Master System Explainer & Apple Design Showcase)
+- `[+]` Zaimplementowano samodzielną, kompletną stronę `system_explainer.html` (Master Explainer) w czystym HTML5/CSS3/ES6+ bez zewnętrznych zależności, zoptymalizowaną pod bezpośrednie otwieranie w dowolnej przeglądarce.
+- `[+]` Wdrożono komponent `modules/components/SystemExplainer.tsx` jako Tab 6 w interaktywnej platformie React/Vite z pełną obsługą gestów Framer Motion.
+- `[+]` Dodano interaktywny kalkulator entropii Shannona H(X) z analizą częstotliwościową bajtów i generatorem strumienia szyfrowanego.
+- `[+]` Dodano interaktywny kalkulator bilansu łącza 60 GHz V-Band z wyliczaniem tłumienia tlenowego (16 dB/km) i wolnej przestrzeni FSPL.
+- `[+]` Wprowadzono wbudowany silnik cząsteczkowy HTML5 Canvas 2D 60 FPS z bezpośrednią manipulacją parametrami (PPS, parametr Poissona lambda, Chaff Burst, sonda DPI).
+- `[+]` Wdrożono precyzyjną dekonstrukcję ramki 1400 B z podglądem Hex/ASCII oraz dynamiczny selektor person modułu Kameleon (Ghost/Burner/Multi-Persona).
+- `[*]` Zaktualizowano pasek nawigacyjny `HeaderStatus.tsx` oraz pływający dock `FloatingNav.tsx` z bezpośrednim odsyłaczem do kompendium.
+- `[*]` Zsynchronizowano dokumentację w `ARCHITECTURE.md` oraz repozytorium wiedzy Obsidian.
