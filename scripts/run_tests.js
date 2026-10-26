@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.resolve(rootDir, 'dist');
 
-console.log('--- ROZPOCZĘCIE TESTÓW JEDNOSTKOWYCH I INTEGRACYJNYCH PANZERNETWORKING ---');
+console.log('--- ROZPOCZĘCIE AUDYTU TESTÓW JEDNOSTKOWYCH I INTEGRACYJNYCH PANZERNETWORKING ---');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -16,27 +16,26 @@ function runTest(name, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`[+] PASS: ${name}`);
+    console.info(`[+] PASS: ${name}`);
     passedTests++;
   } catch (err) {
     console.error(`[-] FAIL: ${name}`);
     console.error(`    ${err.message}`);
-    process.exitCode = 1;
   }
 }
 
-// TEST 1: Build & File Replication Verification
-runTest('Build Asset Integrity (system_explainer.html/css/js in dist)', () => {
-  const requiredFiles = ['system_explainer.html', 'system_explainer.css', 'system_explainer.js', 'index.html'];
-  for (const f of requiredFiles) {
-    const p = path.join(distDir, f);
-    assert.ok(fs.existsSync(p), `Plik ${f} nie istnieje w katalogu dist/`);
-    const stat = fs.statSync(p);
-    assert.ok(stat.size > 0, `Plik ${f} w dist/ jest pusty (0 bajtów)`);
-  }
+// TEST 1: Build & Dynamic Asset Integrity
+runTest('Build Asset Integrity (Dynamic validation in dist/)', () => {
+  const assets = ['system_explainer.html', 'system_explainer.css', 'system_explainer.js', 'index.html'];
+  assets.forEach(file => {
+    const fullPath = path.join(distDir, file);
+    assert.ok(fs.existsSync(fullPath), `Plik ${file} nie istnieje w katalogu dist/`);
+    const stat = fs.statSync(fullPath);
+    assert.ok(stat.size > 0, `Plik ${file} w dist/ jest pusty (0 bajtów)`);
+  });
 });
 
-// TEST 2: Strict XSS & DOM Security Audit
+// TEST 2: Strict XSS & DOM-Based Injection Security
 runTest('Zero innerHTML & eval in system_explainer.js (Strict XSS Immunity)', () => {
   const jsContent = fs.readFileSync(path.join(rootDir, 'system_explainer.js'), 'utf-8');
   assert.strictEqual(jsContent.includes('.innerHTML'), false, 'Wykryto niedozwolone użycie innerHTML w system_explainer.js!');
@@ -44,18 +43,19 @@ runTest('Zero innerHTML & eval in system_explainer.js (Strict XSS Immunity)', ()
   assert.strictEqual(jsContent.includes('eval('), false, 'Wykryto niedozwolone użycie eval()!');
 });
 
-// TEST 3: Strict CSP in system_explainer.html
-runTest('Strict Content Security Policy without unsafe-inline', () => {
+// TEST 3: Strict CSP Header Verification
+runTest('Strict Content Security Policy without unsafe-inline in system_explainer.html', () => {
   const htmlContent = fs.readFileSync(path.join(rootDir, 'system_explainer.html'), 'utf-8');
   assert.ok(htmlContent.includes("Content-Security-Policy"), 'Brak nagłówka CSP w system_explainer.html');
   assert.strictEqual(htmlContent.includes("'unsafe-inline'"), false, 'Wykryto niebezpieczną dyrektywę unsafe-inline w CSP!');
-  assert.ok(htmlContent.includes("<link rel=\"stylesheet\" href=\"system_explainer.css\""), 'Arkusz stylów nie jest poprawnie zlinkowany z pliku zewnętrznego');
-  assert.ok(htmlContent.includes("<script src=\"system_explainer.js\" defer></script>"), 'Skrypt nie jest poprawnie zlinkowany z pliku zewnętrznego');
+  assert.ok(htmlContent.includes("<link rel=\"stylesheet\" href=\"system_explainer.css\""), 'Arkusz stylów nie jest poprawnie zlinkowany');
+  assert.ok(htmlContent.includes("<script src=\"system_explainer.js\" defer></script>"), 'Skrypt nie jest poprawnie zlinkowany');
 });
 
-// TEST 4: Mathematical Shannon Entropy Bounds
-runTest('Shannon Entropy Formula Accuracy & Bounds', () => {
-  function calcEntropy(text) {
+// TEST 4: Mathematical Shannon Entropy Bounds & Null Safety
+runTest('Shannon Entropy Formula Accuracy & Null/Empty Edge Cases', () => {
+  function calcEntropy(rawText) {
+    const text = String(rawText || '').slice(0, 50000);
     if (!text || text.length === 0) return 0;
     const freq = {};
     for (let i = 0; i < text.length; i++) {
@@ -67,8 +67,13 @@ runTest('Shannon Entropy Formula Accuracy & Bounds', () => {
       const p = freq[c] / text.length;
       h -= p * Math.log2(p);
     }
-    return h;
+    return Number.isFinite(h) ? h : 0;
   }
+
+  // Edge cases
+  assert.strictEqual(calcEntropy(null), 0, 'calcEntropy(null) powinno zwrócić 0');
+  assert.strictEqual(calcEntropy(undefined), 0, 'calcEntropy(undefined) powinno zwrócić 0');
+  assert.strictEqual(calcEntropy(''), 0, 'calcEntropy("") powinno zwrócić 0');
 
   // Uniform byte distribution test (2048 samples across 256 byte values)
   const uniformBytes = [];
@@ -85,7 +90,7 @@ runTest('Shannon Entropy Formula Accuracy & Bounds', () => {
   assert.ok(plainTextEntropy < 3.0, `Entropia powtarzalnego tekstu powinna być niska (<3.0), otrzymano: ${plainTextEntropy}`);
 });
 
-// TEST 5: Physics 60 GHz V-Band Attenuation Accuracy
+// TEST 5: Physics 60 GHz V-Band Attenuation
 runTest('60 GHz Link Budget Physics Accuracy (FSPL + Oxygen Absorption)', () => {
   const d = 0.25; // 250 m
   const fspl = 128.01 + 20 * Math.log10(d);
@@ -107,5 +112,14 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
 });
 
 console.log(`\n=================================================`);
-console.log(`WYNIK TESTÓW: ${passedTests}/${totalTests} ZALICZONYCH (100% PASS)`);
+console.log(`WYNIK TESTÓW: ${passedTests}/${totalTests} ZALICZONYCH`);
 console.log(`=================================================`);
+
+// Ensure nonzero exit code on any test failure for CI/CD
+if (passedTests !== totalTests) {
+  console.error(`[-] BŁĄD KRYTYCZNY :: Nie zaliczono ${totalTests - passedTests} testów!`);
+  process.exit(1);
+} else {
+  console.info('[+] SUCCESS :: Wszystkie testy przeszły pomyślnie.');
+  process.exit(0);
+}

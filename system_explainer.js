@@ -385,19 +385,17 @@ function validateFieldSpecs() {
 
 function generateFrameData(isChaff) {
   try {
-    validateFieldSpecs();
+    if (!validateFieldSpecs()) {
+      return { hex: 'ERROR: Niezgodność specyfikacji nagłówków ramki 1400 B', ascii: '|ERROR|' };
+    }
     const hexLines = [];
     const asciiLines = [];
 
-    if (!cachedFrameRandomBytes) {
+    if (!cachedFrameRandomBytes || cachedFrameRandomBytes.length !== 128) {
       cachedFrameRandomBytes = [];
       for (let i = 0; i < 128; i++) {
         cachedFrameRandomBytes.push(generateRandomByteHex());
       }
-    }
-
-    if (cachedFrameRandomBytes.length !== 128) {
-      console.warn(`[!] Ostrzeżenie: Wygenerowano bufor o długości ${cachedFrameRandomBytes.length} B (wymagane 128 B)`);
     }
 
     for (let row = 0; row < 8; row++) {
