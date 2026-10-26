@@ -1,7 +1,7 @@
 /**
  * PanzerNetworking :: Master Explainer Controller
  * Standard: Antigravity Protocol Nano v3.2 & Apple Design Principles
- * Zero-Dependency, Pure DOM Scripting with Zero innerHTML usage (Strict XSS Immunity)
+ * Zero-Dependency, Pure DOM Scripting with DocumentFragment & createElement API (Strict XSS Immunity)
  */
 
 // -------------------------------------------------------------
