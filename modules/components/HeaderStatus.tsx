@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Activity, KeyRound, Cpu, BookOpen } from 'lucide-react';
+import { Shield, Activity, KeyRound, Cpu } from 'lucide-react';
 import { SimulationParams, SimulationMetrics, PersonaMode } from '../types/simulation';
 
 interface HeaderStatusProps {
@@ -89,7 +89,7 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
           </div>
         </div>
 
-        {/* Chameleon Persona Selector & Explainer Link */}
+        {/* Chameleon Persona Selector */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10">
             {(['GHOST', 'BURNER', 'MULTI_PERSONA'] as PersonaMode[]).map((mode) => {
@@ -115,17 +115,6 @@ export const HeaderStatus: React.FC<HeaderStatusProps> = ({
               );
             })}
           </div>
-
-          <a
-            href="system_explainer.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Otwórz pełne kompendium architektoniczne w HTML"
-            className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium border border-panzer-cyan/40 bg-panzer-cyan/10 text-panzer-cyan hover:bg-panzer-cyan/20 transition-colors btn-press"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>EXPLAINER HTML</span>
-          </a>
         </div>
       </div>
     </header>

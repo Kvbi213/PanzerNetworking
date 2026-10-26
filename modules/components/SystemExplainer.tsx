@@ -7,7 +7,6 @@ import {
   Radio,
   EyeOff,
   DollarSign,
-  ExternalLink,
 } from 'lucide-react';
 
 const SPRING_TRANSITION = {
@@ -93,18 +92,6 @@ export const SystemExplainer: React.FC = () => {
               Kompleksowe kompendium inżynieryjne tłumaczące zasady Zero-Trust, kaskadę postkwantową ML-KEM-1024,
               rezonans tlenowy 60 GHz, bufor Poissona oraz niewykrywalność steganograficzną ramki MTU 1400 B.
             </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="system_explainer.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl text-xs font-mono font-medium border border-panzer-cyan/40 bg-panzer-cyan/10 text-panzer-cyan hover:bg-panzer-cyan/20 flex items-center gap-1.5 transition-colors btn-press"
-            >
-              <span>WIDOK STANDALONE HTML</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
           </div>
         </div>
 

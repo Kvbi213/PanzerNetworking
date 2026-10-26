@@ -1,13 +1,12 @@
 {
   "name": "panzernetworking",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.2.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "postbuild": "node scripts/copy_assets.js",
-    "test": "node scripts/run_tests.js",
+    "test": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {

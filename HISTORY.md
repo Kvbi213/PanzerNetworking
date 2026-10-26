@@ -55,3 +55,11 @@
 - `[+]` Dodano atrybuty dostępności `aria-live="polite"` do kontenerów zrzutu Wireshark Hex/ASCII w `system_explainer.html`.
 - `[*]` Pomyślny audyt zewnętrznego Senior Code Reviewera Groq (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`) ze statusem `[+] SUCCESS :: KOD ZWERYFIKOWANY - BRAK UWAG`.
 - `[*]` Zsynchronizowano dokumentację w `ARCHITECTURE.md` oraz repozytorium wiedzy Obsidian.
+
+## v 1.2.3 — 2026-10-26 (Surgical Reduction: HTML Explainer Deprecation)
+- `[-]` Chirurgiczna redukcja zbędnych plików statycznych explainer (`system_explainer.html`, `system_explainer.css`, `system_explainer.js`, `scripts/copy_assets.js`, `scripts/run_tests.js`) na bezpośrednie polecenie operatora.
+- `[*]` Konsolidacja całej prezentacji i kompendium architektonicznego w ramach natywnego drzewa React 19 + TypeScript (`modules/components/SystemExplainer.tsx` - Tab 6).
+- `[-]` Usunięcie martwych odnośników do zewnętrznego pliku HTML z `HeaderStatus.tsx` oraz `SystemExplainer.tsx`.
+- `[*]` Uproszczenie skryptów budowania i testowania w `package.json` (`npm test` -> `tsc --noEmit`, czysty `vite build`).
+- `[*]` Pomyślna weryfikacja kompilacji produkcyjnej aplikacji React (`dist/` - 0 błędów diagnostycznych).
+- `[*]` Synchronizacja bazy wiedzy w `ARCHITECTURE.md`, `docs/versions/v1.2.3.md`, repozytorium Obsidian oraz gałęzi zdalnej GitHub.

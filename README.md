@@ -155,7 +155,7 @@ Aplikacja zrealizowana w oparciu o wytyczne **Apple Design System** (płynna fiz
 3. **Moduł 3: Dekonstruktor Kaskady Matrioszki (`#tab-matrioszka`):** Interaktywny model SVG 5 powłok z podglądem algebry SPN, ARX i krat M-LWE.
 4. **Moduł 4: Macierz Wektorów Ataku GPA-R (`#tab-matrix`):** 4 scenariusze stresowe z oceną bayesowską prawdopodobieństwa sukcesu adwersarza.
 5. **Moduł 5: Panel Audytowy i Obrona Architektury (`#tab-defense`):** Akordeon inżynieryjny Q&A, bilans opóźnień RTT (~231 ms) i zestawienie BOM.
-6. **Moduł 6: Master Explainer & Kompendium Architektoniczne (`#tab-explainer` oraz `system_explainer.html`):** Samodzielne, interaktywne kompendium w czystym HTML5/CSS3/ES6+ (Apple Design) z kalkulatorem entropii Shannona, bilansu 60 GHz, bufora Poissona i pełną dekonstrukcją 6 węzłów.
+6. **Moduł 6: Master Explainer & Kompendium Architektoniczne (`#tab-explainer`):** Interaktywne kompendium w React 19 (Apple Design) z kalkulatorem entropii Shannona, bilansu 60 GHz, bufora Poissona i pełną dekonstrukcją 6 węzłów.
 
 ---
 
@@ -198,7 +198,7 @@ Aplikacja uruchomi się lokalnie pod adresem: `http://localhost:3000/`.
 # Weryfikacja typów TypeScript i kompilacja bundla Vite (CSS jest minifikowane automatycznie)
 npm run build
 ```
-Zoptymalizowane pliki statyczne zostaną wygenerowane w katalogu `dist/`. Arkusz źródłowy `system_explainer.css` jest wersjonowany w repozytorium, a wersja produkcyjna jest tworzona w procesie budowania Vite bez zaśmiecania VCS plikami pochodnymi.
+Zoptymalizowane pliki statyczne aplikacji React zostaną wygenerowane w katalogu `dist/`.
 
 ---
 
