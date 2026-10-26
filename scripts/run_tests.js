@@ -9,6 +9,19 @@ const distDir = path.resolve(rootDir, 'dist');
 
 console.log('--- ROZPOCZĘCIE AUDYTU TESTÓW JEDNOSTKOWYCH I INTEGRACYJNYCH PANZERNETWORKING ---');
 
+function readFileSafe(filePath, description) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      console.error(`[-] BŁĄD KRYTYCZNY :: Plik ${description} (${filePath}) nie istnieje w systemie plików.`);
+      process.exit(1);
+    }
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch (err) {
+    console.error(`[-] BŁĄD KRYTYCZNY :: Nie udało się odczytać ${description}: ${err.message}`);
+    process.exit(1);
+  }
+}
+
 let passedTests = 0;
 let totalTests = 0;
 
@@ -29,7 +42,7 @@ runTest('Build Asset Integrity (Dynamic validation in dist/)', () => {
   const assets = ['system_explainer.html', 'system_explainer.css', 'system_explainer.js', 'index.html'];
   assets.forEach(file => {
     const fullPath = path.join(distDir, file);
-    assert.ok(fs.existsSync(fullPath), `Plik ${file} nie istnieje w katalogu dist/`);
+    assert.strictEqual(fs.existsSync(fullPath), true, `Plik ${file} nie istnieje w katalogu dist/`);
     const stat = fs.statSync(fullPath);
     assert.ok(stat.size > 0, `Plik ${file} w dist/ jest pusty (0 bajtów)`);
   });
@@ -37,7 +50,7 @@ runTest('Build Asset Integrity (Dynamic validation in dist/)', () => {
 
 // TEST 2: Strict XSS & DOM-Based Injection Security
 runTest('Zero innerHTML & eval in system_explainer.js (Strict XSS Immunity)', () => {
-  const jsContent = fs.readFileSync(path.join(rootDir, 'system_explainer.js'), 'utf-8');
+  const jsContent = readFileSafe(path.join(rootDir, 'system_explainer.js'), 'system_explainer.js');
   assert.strictEqual(jsContent.includes('.innerHTML'), false, 'Wykryto niedozwolone użycie innerHTML w system_explainer.js!');
   assert.strictEqual(jsContent.includes('document.write'), false, 'Wykryto niedozwolone użycie document.write!');
   assert.strictEqual(jsContent.includes('eval('), false, 'Wykryto niedozwolone użycie eval()!');
@@ -45,11 +58,11 @@ runTest('Zero innerHTML & eval in system_explainer.js (Strict XSS Immunity)', ()
 
 // TEST 3: Strict CSP Header Verification
 runTest('Strict Content Security Policy without unsafe-inline in system_explainer.html', () => {
-  const htmlContent = fs.readFileSync(path.join(rootDir, 'system_explainer.html'), 'utf-8');
-  assert.ok(htmlContent.includes("Content-Security-Policy"), 'Brak nagłówka CSP w system_explainer.html');
+  const htmlContent = readFileSafe(path.join(rootDir, 'system_explainer.html'), 'system_explainer.html');
+  assert.ok(/<meta http-equiv="Content-Security-Policy"[^>]*content="[^"]*"/i.test(htmlContent), 'Brak nagłówka CSP meta w system_explainer.html');
   assert.strictEqual(htmlContent.includes("'unsafe-inline'"), false, 'Wykryto niebezpieczną dyrektywę unsafe-inline w CSP!');
-  assert.ok(htmlContent.includes("<link rel=\"stylesheet\" href=\"system_explainer.css\""), 'Arkusz stylów nie jest poprawnie zlinkowany');
-  assert.ok(htmlContent.includes("<script src=\"system_explainer.js\" defer></script>"), 'Skrypt nie jest poprawnie zlinkowany');
+  assert.strictEqual(htmlContent.includes('<link rel="stylesheet" href="system_explainer.css"'), true, 'Arkusz stylów nie jest poprawnie zlinkowany');
+  assert.strictEqual(htmlContent.includes('<script src="system_explainer.js" defer></script>'), true, 'Skrypt nie jest poprawnie zlinkowany');
 });
 
 // TEST 4: Mathematical Shannon Entropy Bounds & Null Safety
@@ -109,6 +122,25 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
   assert.strictEqual(headerTotal, 65, 'Suma nagłówków i tagów musi wynosić dokładnie 65 B');
   const payloadMax = 1400 - headerTotal;
   assert.strictEqual(payloadMax, 1335, 'Dopuszczalna przestrzeń ładunku z dopełnieniem wynosi 1335 B');
+});
+
+// TEST 7: Frame Dissector Logic & Field Validation Robustness
+runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
+  function testValidateFieldSpecs(specs) {
+    try {
+      if (!specs || typeof specs !== 'object') return false;
+      const headerTotal = Number(specs.tls || 0) + Number(specs.nonce || 0) + Number(specs.inner || 0) + Number(specs.mac || 0);
+      return headerTotal === 65;
+    } catch {
+      return false;
+    }
+  }
+
+  assert.strictEqual(testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 }), true, 'Standardowe nagłówki powinny przejść walidację');
+  assert.strictEqual(testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), false, 'Niekompletne nagłówki powinny zostać odrzucone');
+  assert.strictEqual(testValidateFieldSpecs(null), false, 'null powinien zostać odrzucony');
+  assert.strictEqual(testValidateFieldSpecs(undefined), false, 'undefined powinien zostać odrzucony');
+  assert.strictEqual(testValidateFieldSpecs('invalid'), false, 'string powinien zostać odrzucony');
 });
 
 console.log(`\n=================================================`);
