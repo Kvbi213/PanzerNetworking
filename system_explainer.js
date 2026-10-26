@@ -319,14 +319,70 @@ function renderNodeDetails() {
 }
 
 // -------------------------------------------------------------
-// 5. UI CONTROLLER: WIRESHARK LIVE HEX DUMP (1400 B)
+// 5. UI CONTROLLER: WIRESHARK LIVE HEX DUMP & DISSECTOR (1400 B)
 // -------------------------------------------------------------
 let isChaffFrame = false;
+let activeFrameField = 'tls';
+let cachedFrameRandomBytes = null;
+
+const FRAME_FIELDS = {
+  tls: {
+    name: "Nagłówek Rekordu TLS 1.3 (Application Data)",
+    offset: "0x0000 - 0x0004 (5 bajtów)",
+    hex: "17 03 03 05 73",
+    visibility: "Jawny dla systemów NGFW / DPI",
+    role: "Kamuflaż steganograficzny: ramka udaje standardowy strumień HTTPS. Brak sygnatur uścisków dłoni WireGuard lub obfs4.",
+    color: "var(--accent-cyan)"
+  },
+  nonce: {
+    name: "Rozszerzony Wektor Inicjalizacyjny XChaCha20 Nonce",
+    offset: "0x0005 - 0x001C (24 bajty = 192 bity)",
+    hex: "9f 4a 12 bc e7 31 88 5d 02 aa 7e 19 41 ff 28 6b c0 84 33 e1 50 92 ad 14",
+    visibility: "Pseudolosowy (Nierozróżnialny od szyfrogramu TLS)",
+    role: "Rozszerzony nonce 192-bitowy całkowicie eliminuje ryzyko powtórzenia IV przy pracy ciągłej 1 Gbps.",
+    color: "var(--accent-emerald)"
+  },
+  inner: {
+    name: "Zaszyfrowany Nagłówek Wewnętrzny Ramki",
+    offset: "0x001D - 0x0020 (4 bajty)",
+    hex: "01 05 2a 00",
+    visibility: "Szyfrowany w warstwie XChaCha20 + AES-256-GCM",
+    role: "Oznacza typ pakietu: 0x01 (prawdziwe dane) vs 0xFF (szum Dummy Chaff) oraz długość ładunku bez wycieku do DPI.",
+    color: "var(--accent-amber)"
+  },
+  payload: {
+    name: "Szyfrowany Ładunek AES-256-GCM + Losowy Padding Wyrównujący",
+    offset: "0x0021 - 0x055F (1335 bajtów)",
+    hex: "54 6f 72 20 43 65 6c 6c 73 20 28 35 31 34 20 42 29 20 2b 20 50 61 64 64 69 6e 67...",
+    visibility: "Potrójnie szyfrowany (Tor + AES + XChaCha20)",
+    role: "Wyrównanie do stałego MTU 1400 B zapewnia Constant Bitrate (CBR), niwecząc ataki korelacji rozmiaru pakietów.",
+    color: "var(--accent-purple)"
+  },
+  mac: {
+    name: "Podwójne Tagi Uwierzytelniania Integralności (AEAD)",
+    offset: "0x0560 - 0x057F (32 bajty)",
+    hex: "Tag AES-GCM (16 B): 7a 1b 88... | Tag Poly1305 (16 B): 44 f2 90...",
+    visibility: "Tagi kryptograficzne",
+    role: "Uwierzytelnienie w ciele Galois GF(2^128) dla Węzła 4 oraz Poly1305 dla Węzła 3. Każda modyfikacja pakietu przez NGFW powoduje natychmiastowy cichy drop.",
+    color: "var(--accent-rose)"
+  }
+};
+
+function generateRandomByteHex() {
+  const hexChars = "0123456789abcdef";
+  return hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)];
+}
 
 function generateFrameData(isChaff) {
   const hexLines = [];
   const asciiLines = [];
-  const hexChars = "0123456789abcdef";
+
+  if (!cachedFrameRandomBytes) {
+    cachedFrameRandomBytes = [];
+    for (let i = 0; i < 128; i++) {
+      cachedFrameRandomBytes.push(generateRandomByteHex());
+    }
+  }
 
   for (let row = 0; row < 8; row++) {
     const offset = (row * 16).toString(16).padStart(4, '0');
@@ -335,7 +391,7 @@ function generateFrameData(isChaff) {
 
     for (let col = 0; col < 16; col++) {
       const byteIdx = row * 16 + col;
-      let bHex = "";
+      let bHex = cachedFrameRandomBytes[byteIdx] || "00";
 
       if (byteIdx === 0) bHex = "17"; // TLS 1.3 Application Data
       else if (byteIdx === 1) bHex = "03"; // TLS Major
@@ -343,9 +399,8 @@ function generateFrameData(isChaff) {
       else if (byteIdx === 3) bHex = "05"; // Length high
       else if (byteIdx === 4) bHex = "73"; // Length low (1395 B)
       else if (byteIdx === 28) bHex = isChaff ? "ff" : "01"; // Inner Packet Type
-      else {
-        bHex = hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)];
-      }
+      else if (byteIdx === 29) bHex = "05"; // Payload length high
+      else if (byteIdx === 30) bHex = "2a"; // Payload length low
 
       bytes.push(bHex);
       const bVal = parseInt(bHex, 16);
@@ -359,6 +414,78 @@ function generateFrameData(isChaff) {
   return { hex: hexLines.join('\n'), ascii: asciiLines.join('\n') };
 }
 
+function renderFrameFieldInspector(fieldKey) {
+  activeFrameField = fieldKey;
+  const f = FRAME_FIELDS[fieldKey] || FRAME_FIELDS.tls;
+  const inspector = document.getElementById('frame-field-inspector');
+  if (!inspector) return;
+
+  const topRow = document.createElement('div');
+  topRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;';
+
+  const titleWrap = document.createElement('div');
+  const tag = document.createElement('span');
+  tag.className = 'tag-label';
+  tag.style.cssText = `color: ${f.color}; margin-right: 0.5rem;`;
+  tag.textContent = 'WYBRANY SEGMENT RAMKI';
+
+  const strongTitle = document.createElement('strong');
+  strongTitle.style.cssText = 'color: #ffffff; font-size: 0.85rem;';
+  strongTitle.textContent = f.name;
+
+  titleWrap.appendChild(tag);
+  titleWrap.appendChild(strongTitle);
+
+  const offsetBadge = document.createElement('span');
+  offsetBadge.className = 'tag-label';
+  offsetBadge.style.cssText = `background: rgba(255, 255, 255, 0.08); color: ${f.color}; border: 1px solid ${f.color}; padding: 2px 6px; border-radius: 4px;`;
+  offsetBadge.textContent = f.offset;
+
+  topRow.appendChild(titleWrap);
+  topRow.appendChild(offsetBadge);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid-2';
+  grid.style.cssText = 'gap: 0.75rem; margin-top: 0.5rem;';
+
+  const col1 = document.createElement('div');
+  col1.style.cssText = 'background: rgba(0, 0, 0, 0.4); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-subtle);';
+  const roleLabel = document.createElement('div');
+  roleLabel.style.cssText = 'color: var(--text-dim); font-size: 0.7rem; margin-bottom: 2px;';
+  roleLabel.textContent = 'FUNKCJA ARCHITEKTONICZNA:';
+  const roleText = document.createElement('div');
+  roleText.style.cssText = 'color: #e2e8f0; font-size: 0.75rem; line-height: 1.4;';
+  roleText.textContent = f.role;
+  col1.appendChild(roleLabel);
+  col1.appendChild(roleText);
+
+  const col2 = document.createElement('div');
+  col2.style.cssText = 'background: rgba(0, 0, 0, 0.4); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-subtle);';
+  const visLabel = document.createElement('div');
+  visLabel.style.cssText = 'color: var(--text-dim); font-size: 0.7rem; margin-bottom: 2px;';
+  visLabel.textContent = 'WIDOCZNOŚĆ DLA CENSOR/DPI:';
+  const visText = document.createElement('div');
+  visText.style.cssText = `color: ${f.color}; font-size: 0.75rem; font-weight: 700; line-height: 1.4;`;
+  visText.textContent = f.visibility;
+  col2.appendChild(visLabel);
+  col2.appendChild(visText);
+
+  grid.appendChild(col1);
+  grid.appendChild(col2);
+
+  inspector.replaceChildren(topRow, grid);
+
+  // Update active state in diagram
+  document.querySelectorAll('.frame-block').forEach(block => {
+    const bField = block.getAttribute('data-field');
+    if (bField === fieldKey) {
+      block.classList.add('active');
+    } else {
+      block.classList.remove('active');
+    }
+  });
+}
+
 function updateWiresharkDump() {
   const data = generateFrameData(isChaffFrame);
   const hexEl = document.getElementById('raw-hex-dump');
@@ -367,20 +494,46 @@ function updateWiresharkDump() {
   if (asciiEl) asciiEl.textContent = data.ascii;
 }
 
-const togglePayloadBtn = document.getElementById('btn-toggle-payload-type');
-if (togglePayloadBtn) {
-  togglePayloadBtn.addEventListener('click', () => {
-    isChaffFrame = !isChaffFrame;
-    if (isChaffFrame) {
-      togglePayloadBtn.textContent = "TYP ŁADUNKU: 0xFF (DUMMY CHAFF)";
-      togglePayloadBtn.style.color = "var(--accent-amber)";
-      togglePayloadBtn.style.borderColor = "rgba(245, 158, 11, 0.5)";
-    } else {
-      togglePayloadBtn.textContent = "TYP ŁADUNKU: 0x01 (DANE REALNE)";
-      togglePayloadBtn.style.color = "var(--accent-cyan)";
-      togglePayloadBtn.style.borderColor = "rgba(0, 240, 255, 0.4)";
-    }
-    updateWiresharkDump();
+function initWiresharkDissector() {
+  updateWiresharkDump();
+  renderFrameFieldInspector(activeFrameField);
+
+  const togglePayloadBtn = document.getElementById('btn-toggle-payload-type');
+  if (togglePayloadBtn) {
+    togglePayloadBtn.addEventListener('click', () => {
+      isChaffFrame = !isChaffFrame;
+      if (isChaffFrame) {
+        togglePayloadBtn.textContent = "TYP ŁADUNKU: 0xFF (DUMMY CHAFF)";
+        togglePayloadBtn.style.color = "var(--accent-amber)";
+        togglePayloadBtn.style.borderColor = "rgba(245, 158, 11, 0.5)";
+      } else {
+        togglePayloadBtn.textContent = "TYP ŁADUNKU: 0x01 (DANE REALNE)";
+        togglePayloadBtn.style.color = "var(--accent-cyan)";
+        togglePayloadBtn.style.borderColor = "rgba(0, 240, 255, 0.4)";
+      }
+      if (FRAME_FIELDS.inner) {
+        FRAME_FIELDS.inner.hex = isChaffFrame ? "ff 05 2a 00" : "01 05 2a 00";
+      }
+      updateWiresharkDump();
+      if (activeFrameField === 'inner') {
+        renderFrameFieldInspector('inner');
+      }
+    });
+  }
+
+  const resampleBtn = document.getElementById('btn-resample-frame');
+  if (resampleBtn) {
+    resampleBtn.addEventListener('click', () => {
+      cachedFrameRandomBytes = null;
+      updateWiresharkDump();
+    });
+  }
+
+  document.querySelectorAll('.frame-block').forEach(block => {
+    block.addEventListener('click', () => {
+      const fieldKey = block.getAttribute('data-field');
+      if (fieldKey) renderFrameFieldInspector(fieldKey);
+    });
   });
 }
 
@@ -452,15 +605,27 @@ function renderCryptoShell(shellId) {
 
   card.replaceChildren(tag, h3, metaDiv, formulaBox, featsWrap);
 
-  // Update concentric circles highlight
+  // Update concentric circles highlight & glow
   document.querySelectorAll('.crypto-circle').forEach(c => {
     const cId = parseInt(c.getAttribute('data-shell'));
     if (cId === shellId) {
       c.setAttribute('stroke-width', '5');
       c.style.opacity = '1';
+      c.style.filter = 'drop-shadow(0 0 8px currentColor)';
     } else {
       c.setAttribute('stroke-width', '2');
       c.style.opacity = '0.7';
+      c.style.filter = 'none';
+    }
+  });
+
+  // Update shell buttons highlight
+  document.querySelectorAll('.shell-btn').forEach(btn => {
+    const bId = parseInt(btn.getAttribute('data-shell'));
+    if (bId === shellId) {
+      btn.classList.add('active', 'btn-primary');
+    } else {
+      btn.classList.remove('active', 'btn-primary');
     }
   });
 }
@@ -552,55 +717,109 @@ function calculateShannonEntropy(rawText) {
   return entropy;
 }
 
-const entropyCalcBtn = document.getElementById('btn-entropy-calc');
-if (entropyCalcBtn) {
-  entropyCalcBtn.addEventListener('click', () => {
-    const input = document.getElementById('entropy-input');
-    const text = input ? input.value : '';
-    const h = calculateShannonEntropy(text);
-    const display = document.getElementById('entropy-value-display');
-    if (display) display.textContent = `${h.toFixed(4)} b/B`;
-  });
-}
+function updateEntropyDisplay(val) {
+  const display = document.getElementById('entropy-value-display');
+  const verdict = document.getElementById('entropy-verdict-display');
+  if (display) display.textContent = `${val.toFixed(4)} b/B`;
 
-const entropyMockBtn = document.getElementById('btn-entropy-mock');
-if (entropyMockBtn) {
-  entropyMockBtn.addEventListener('click', () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~|}{[]:;?><,./-=";
-    let mock = "";
-    for (let i = 0; i < 256; i++) {
-      mock += chars.charAt(Math.floor(Math.random() * chars.length));
+  if (verdict) {
+    if (val >= 7.99) {
+      verdict.textContent = "[+] STATUS: SZUM BIAŁY (NIEWYKRYWALNY DLA DPI)";
+      verdict.style.color = "var(--accent-emerald)";
+      verdict.style.borderColor = "rgba(16, 185, 129, 0.3)";
+      verdict.style.background = "rgba(16, 185, 129, 0.15)";
+    } else if (val >= 6.0) {
+      verdict.textContent = "[!] STATUS: ŚREDNIA ENTROPIA (WYKRYWALNA STRUKTURA)";
+      verdict.style.color = "var(--accent-amber)";
+      verdict.style.borderColor = "rgba(245, 158, 11, 0.3)";
+      verdict.style.background = "rgba(245, 158, 11, 0.15)";
+    } else {
+      verdict.textContent = "[!] STATUS: NISKA ENTROPIA (JAWNY TEKST / BŁĄD)";
+      verdict.style.color = "var(--accent-rose)";
+      verdict.style.borderColor = "rgba(244, 63, 94, 0.3)";
+      verdict.style.background = "rgba(244, 63, 94, 0.15)";
     }
-    const input = document.getElementById('entropy-input');
-    if (input) input.value = mock;
-    const h = calculateShannonEntropy(mock);
-    const display = document.getElementById('entropy-value-display');
-    if (display) display.textContent = `${h.toFixed(4)} b/B`;
-  });
+  }
 }
 
-// 60 GHz Link Budget Slider (Consistent clamp [0.05, 3.0] km)
-const distSlider = document.getElementById('dist-slider');
-if (distSlider) {
-  distSlider.addEventListener('input', (e) => {
-    const raw = parseFloat(e.target.value);
-    const d = (Number.isFinite(raw) && raw >= 0.05 && raw <= 3.0) ? raw : 0.25;
-    const distLabel = document.getElementById('dist-label');
-    if (distLabel) distLabel.textContent = `${d.toFixed(2)} km (${Math.round(d * 1000)} m)`;
+function update60GhzCalculations(distanceKm) {
+  const d = (Number.isFinite(distanceKm) && distanceKm >= 0.05 && distanceKm <= 3.0) ? distanceKm : 0.25;
+  const distLabel = document.getElementById('dist-label');
+  if (distLabel) distLabel.textContent = `${d.toFixed(2)} km (${Math.round(d * 1000)} m)`;
 
-    // FSPL at 60 GHz: 128.01 + 20*log10(d)
-    const fspl = 128.01 + 20 * Math.log10(d);
-    const o2Loss = 16.0 * d;
-    const totalLoss = fspl + o2Loss;
+  // FSPL at 60 GHz: 92.45 + 20*log10(60) + 20*log10(d) = 128.01 + 20*log10(d)
+  const fspl = 128.01 + 20 * Math.log10(d);
+  const o2Loss = 16.0 * d;
+  const totalLoss = fspl + o2Loss;
 
-    const attDisplay = document.getElementById('attenuation-display');
-    const o2Label = document.getElementById('o2-loss-label');
-    const fsplLabel = document.getElementById('fspl-loss-label');
+  const attDisplay = document.getElementById('attenuation-display');
+  const o2Label = document.getElementById('o2-loss-label');
+  const fsplLabel = document.getElementById('fspl-loss-label');
 
-    if (attDisplay) attDisplay.textContent = `-${totalLoss.toFixed(1)} dB`;
-    if (o2Label) o2Label.textContent = `${o2Loss.toFixed(1)} dB`;
-    if (fsplLabel) fsplLabel.textContent = `${fspl.toFixed(1)} dB`;
-  });
+  if (attDisplay) attDisplay.textContent = `-${totalLoss.toFixed(1)} dB`;
+  if (o2Label) o2Label.textContent = `${o2Loss.toFixed(1)} dB`;
+  if (fsplLabel) fsplLabel.textContent = `${fspl.toFixed(1)} dB`;
+}
+
+function initCalculators() {
+  const entropyCalcBtn = document.getElementById('btn-entropy-calc');
+  if (entropyCalcBtn) {
+    entropyCalcBtn.addEventListener('click', () => {
+      const input = document.getElementById('entropy-input');
+      const text = input ? input.value : '';
+      const h = calculateShannonEntropy(text);
+      updateEntropyDisplay(h);
+    });
+  }
+
+  const entropyMockBtn = document.getElementById('btn-entropy-mock');
+  if (entropyMockBtn) {
+    entropyMockBtn.addEventListener('click', () => {
+      // Generate authentic high-entropy byte sequence across 256 byte states
+      let mock = "";
+      if (window.crypto && window.crypto.getRandomValues) {
+        const randomBytes = new Uint8Array(2048);
+        window.crypto.getRandomValues(randomBytes);
+        for (let i = 0; i < randomBytes.length; i++) {
+          mock += String.fromCharCode(randomBytes[i]);
+        }
+      } else {
+        for (let i = 0; i < 2048; i++) {
+          mock += String.fromCharCode(Math.floor(Math.random() * 256));
+        }
+      }
+      const input = document.getElementById('entropy-input');
+      if (input) input.value = mock;
+      const h = calculateShannonEntropy(mock);
+      updateEntropyDisplay(h);
+    });
+  }
+
+  const distSlider = document.getElementById('dist-slider');
+  if (distSlider) {
+    distSlider.addEventListener('input', (e) => {
+      update60GhzCalculations(parseFloat(e.target.value));
+    });
+    // Sync initial state
+    update60GhzCalculations(parseFloat(distSlider.value));
+  }
+
+  // Initial entropy sample
+  const entropyInput = document.getElementById('entropy-input');
+  if (entropyInput) {
+    if (!entropyInput.value) {
+      // Default to 1400 B high-entropy mock
+      let initialMock = "";
+      for (let i = 0; i < 1400; i++) {
+        initialMock += String.fromCharCode(Math.floor(Math.random() * 256));
+      }
+      entropyInput.value = initialMock;
+      const h = calculateShannonEntropy(initialMock);
+      updateEntropyDisplay(h);
+    } else {
+      updateEntropyDisplay(calculateShannonEntropy(entropyInput.value));
+    }
+  }
 }
 
 // -------------------------------------------------------------
@@ -612,10 +831,13 @@ let simPaused = false;
 let simPPS = 24;
 let simLambda = 25;
 let particles = [];
+let dpiProbes = [];
+let defenseFlashes = [];
 let particleIdSeq = 1;
 let lastSimTime = performance.now();
 let simSpawnTimer = 0;
 let simAnimId = null;
+let dpiDefenseActiveTimer = 0;
 
 if (canvas) {
   ctx = canvas.getContext('2d');
@@ -639,7 +861,7 @@ function getSimNodePositions() {
   if (!canvas) return [];
   const rect = canvas.getBoundingClientRect();
   const step = rect.width / 7;
-  const y = rect.height * 0.5;
+  const y = rect.height * 0.55;
   return [
     { x: step * 1, y, label: "W0: Stacja" },
     { x: step * 2, y, label: "W1: 60GHz" },
@@ -656,7 +878,7 @@ function simLoop(currentTime) {
     return;
   }
 
-  const delta = (currentTime - lastSimTime) / 1000;
+  const delta = Math.min(0.1, (currentTime - lastSimTime) / 1000);
   lastSimTime = currentTime;
 
   const rect = canvas.getBoundingClientRect();
@@ -665,7 +887,7 @@ function simLoop(currentTime) {
   const nodes = getSimNodePositions();
   if (nodes.length < 6) return;
 
-  // Draw connection lines
+  // Draw main transit line
   ctx.beginPath();
   ctx.moveTo(nodes[0].x, nodes[0].y);
   for (let i = 1; i < nodes.length; i++) {
@@ -677,7 +899,7 @@ function simLoop(currentTime) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Spawning
+  // Spawning normal transit particles
   if (!simPaused) {
     simSpawnTimer += delta;
     const interval = 1 / Math.max(1, simPPS);
@@ -700,7 +922,7 @@ function simLoop(currentTime) {
     }
   }
 
-  // Update & render particles
+  // Update & render regular transit particles
   particles = particles.filter(p => {
     if (simPaused) {
       ctx.beginPath();
@@ -723,7 +945,7 @@ function simLoop(currentTime) {
 
       if (p.delayRemaining <= 0) {
         p.inBuffer = false;
-        if (p.isChaff && Math.random() < 0.5) return false; // Destroy chaff
+        if (p.isChaff && Math.random() < 0.5) return false; // Chaff destroyed
         p.currentNode = 3;
         p.targetX = nodes[4].x;
         p.targetY = nodes[4].y;
@@ -739,7 +961,7 @@ function simLoop(currentTime) {
       p.currentNode++;
       if (p.currentNode === 3) {
         p.inBuffer = true;
-        // Exponential sample
+        // Exponential distribution sampling (Poisson process)
         p.delayRemaining = -Math.log(1.0 - Math.random()) * simLambda;
       } else if (p.currentNode >= nodes.length - 1) {
         return false;
@@ -756,28 +978,100 @@ function simLoop(currentTime) {
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fillStyle = p.isChaff ? "#f59e0b" : "#00f0ff";
     ctx.shadowColor = p.isChaff ? "#f59e0b" : "#00f0ff";
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 6;
     ctx.fill();
     ctx.shadowBlur = 0;
 
     return true;
   });
 
-  // Draw Nodes
+  // Update & render active adversary DPI probes
+  dpiProbes = dpiProbes.filter(probe => {
+    if (simPaused) {
+      ctx.beginPath();
+      ctx.arc(probe.x, probe.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#f43f5e";
+      ctx.fill();
+      return true;
+    }
+
+    const targetNode = nodes[probe.targetNodeIndex];
+    if (!targetNode) return false;
+
+    const dx = targetNode.x - probe.x;
+    const dy = targetNode.y - probe.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 6) {
+      // Trigger camouflage defense flash
+      defenseFlashes.push({
+        x: targetNode.x,
+        y: targetNode.y,
+        radius: 10,
+        maxRadius: 36,
+        alpha: 1.0,
+        color: "#10b981"
+      });
+      dpiDefenseActiveTimer = 2.5;
+      return false; // Probe deflected by 200 OK
+    }
+
+    probe.x += (dx / dist) * probe.speed * delta;
+    probe.y += (dy / dist) * probe.speed * delta;
+
+    // Draw pulsating probe with scanner cone
+    ctx.beginPath();
+    ctx.arc(probe.x, probe.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#f43f5e";
+    ctx.shadowColor = "#f43f5e";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    return true;
+  });
+
+  // Render defense flashes (camouflage deflection waves)
+  defenseFlashes = defenseFlashes.filter(flash => {
+    flash.radius += 40 * delta;
+    flash.alpha -= 1.2 * delta;
+    if (flash.alpha <= 0) return false;
+
+    ctx.beginPath();
+    ctx.arc(flash.x, flash.y, flash.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(16, 185, 129, ${flash.alpha})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    return true;
+  });
+
+  // Draw active defense status banner on canvas
+  if (dpiDefenseActiveTimer > 0) {
+    dpiDefenseActiveTimer -= delta;
+    ctx.font = "bold 11px -apple-system, monospace";
+    ctx.fillStyle = "rgba(16, 185, 129, 0.9)";
+    ctx.textAlign = "center";
+    ctx.fillText("[+] SONDA DPI ZNEUTRALIZOWANA: W2 (ECH SNI) & W4 (NGINX 200 OK)", rect.width * 0.5, 32);
+  }
+
+  // Draw transit nodes
   nodes.forEach((n, idx) => {
     const isBuffer = idx === 3;
+    const isTargeted = idx === 2 || idx === 4;
+
     ctx.beginPath();
-    ctx.arc(n.x, n.y, isBuffer ? 28 : 18, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(13, 19, 31, 0.9)";
-    ctx.strokeStyle = isBuffer ? "#a855f7" : "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = isBuffer ? 2 : 1.5;
+    ctx.arc(n.x, n.y, isBuffer ? 26 : 18, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(13, 19, 31, 0.95)";
+    ctx.strokeStyle = isBuffer ? "#a855f7" : (isTargeted && dpiDefenseActiveTimer > 0 ? "#10b981" : "rgba(255, 255, 255, 0.2)");
+    ctx.lineWidth = isBuffer || (isTargeted && dpiDefenseActiveTimer > 0) ? 2 : 1.5;
     ctx.fill();
     ctx.stroke();
 
     ctx.font = "10px -apple-system, monospace";
     ctx.fillStyle = "#94a3b8";
     ctx.textAlign = "center";
-    ctx.fillText(n.label, n.x, n.y + (isBuffer ? 44 : 32));
+    ctx.fillText(n.label, n.x, n.y + (isBuffer ? 42 : 32));
   });
 
   simAnimId = requestAnimationFrame(simLoop);
@@ -813,6 +1107,7 @@ const pauseBtn = document.getElementById('sim-btn-pause');
 if (pauseBtn) {
   pauseBtn.addEventListener('click', (e) => {
     simPaused = !simPaused;
+    lastSimTime = performance.now();
     e.currentTarget.textContent = simPaused ? "WZNÓW" : "WSTRZYMAJ";
   });
 }
@@ -825,11 +1120,11 @@ if (chaffBtn) {
     for (let i = 0; i < 25; i++) {
       particles.push({
         id: particleIdSeq++,
-        x: nodes[0].x,
-        y: nodes[0].y,
+        x: nodes[0].x + (Math.random() - 0.5) * 12,
+        y: nodes[0].y + (Math.random() - 0.5) * 8,
         targetX: nodes[1].x,
         targetY: nodes[1].y,
-        speed: 200 + Math.random() * 60,
+        speed: 190 + Math.random() * 50,
         currentNode: 0,
         isChaff: true,
         inBuffer: false,
@@ -844,12 +1139,31 @@ const dpiBtn = document.getElementById('sim-btn-dpi');
 if (dpiBtn) {
   dpiBtn.addEventListener('click', (e) => {
     const btn = e.currentTarget;
-    btn.textContent = "SONDA DPI W TOKU...";
-    btn.style.background = "rgba(244, 63, 94, 0.3)";
+    btn.textContent = "SONDA DPI W TOKU (SKANOWANIE W2/W4)...";
+    btn.style.background = "rgba(244, 63, 94, 0.25)";
+    btn.style.borderColor = "var(--accent-rose)";
+
+    const nodes = getSimNodePositions();
+    if (nodes.length >= 5) {
+      // Spawn adversary probes targeting W2 (Node 2) and W4 (Node 4)
+      dpiProbes.push(
+        { x: nodes[2].x, y: 15, targetNodeIndex: 2, speed: 170 },
+        { x: nodes[4].x, y: 15, targetNodeIndex: 4, speed: 170 }
+      );
+    }
+
     setTimeout(() => {
-      btn.textContent = "SONDA DPI PROBE";
-      btn.style.background = "transparent";
-    }, 3000);
+      btn.textContent = "SONDA DPI ZABLOKOWANA (200 OK)";
+      btn.style.background = "rgba(16, 185, 129, 0.2)";
+      btn.style.borderColor = "var(--accent-emerald)";
+      btn.style.color = "var(--accent-emerald)";
+      setTimeout(() => {
+        btn.textContent = "SONDA DPI PROBE";
+        btn.style.background = "transparent";
+        btn.style.borderColor = "rgba(244, 63, 94, 0.4)";
+        btn.style.color = "var(--accent-rose)";
+      }, 2000);
+    }, 1500);
   });
 }
 
@@ -882,23 +1196,26 @@ document.querySelectorAll('.accordion-header').forEach(header => {
 });
 
 // -------------------------------------------------------------
-// INITIAL BOOT
+// IDEMPOTENT INITIALIZATION
 // -------------------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  renderNodeTabs();
-  renderNodeDetails();
-  updateWiresharkDump();
-  renderCryptoShell(3);
-  renderPersona('GHOST');
-  startSim();
-});
+let panzerExplainerInitialized = false;
 
-// Fallback if already loaded
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
+function initExplainer() {
+  if (panzerExplainerInitialized) return;
+  panzerExplainerInitialized = true;
+
   renderNodeTabs();
   renderNodeDetails();
-  updateWiresharkDump();
+  initWiresharkDissector();
   renderCryptoShell(3);
   renderPersona('GHOST');
+  initCalculators();
   startSim();
 }
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initExplainer);
+} else {
+  initExplainer();
+}
+

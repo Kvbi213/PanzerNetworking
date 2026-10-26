@@ -38,3 +38,11 @@
 - `[+]` Wdrożono precyzyjną dekonstrukcję ramki 1400 B z podglądem Hex/ASCII oraz dynamiczny selektor person modułu Kameleon (Ghost/Burner/Multi-Persona).
 - `[*]` Zaktualizowano pasek nawigacyjny `HeaderStatus.tsx` oraz pływający dock `FloatingNav.tsx` z bezpośrednim odsyłaczem do kompendium.
 - `[*]` Zsynchronizowano dokumentację w `ARCHITECTURE.md` oraz repozytorium wiedzy Obsidian.
+
+## v 1.2.1 — 2026-10-26 (Hardening & Deep Verification Master Explainer)
+- `[+]` Wdrożono aktywny dekonstruktor segmentów ramki 1400 B Wireshark z dynamicznym inspektorem offsetów binarnych, ról steganograficznych i przyciskiem re-samplingu.
+- `[+]` Zaimplementowano w pełni funkcjonalną symulację aktywnej sondy DPI w silniku cząsteczkowym HTML5 Canvas (animowane próbniki adwersarza, kamuflaż ECH i tarcze 200 OK w węzłach W2 i W4).
+- `[+]` Wprowadzono generator symulowanego 1400-bajtowego szyfru PanzerNet o pełnej 256-wartościowej przestrzeni bajtowej ($0x00..0xFF$) gwarantujący zbieżność entropii Shannona $H(X) \ge 7.9990\text{ b/B}$ z dynamiczną klasyfikacją DPI.
+- `[*]` Skorygowano inicjalne parametry fizyczne bilansu łącza 60 GHz (-120.0 dB, FSPL 116.0 dB, O2 4.0 dB dla d = 0.25 km) oraz zsynchronizowano podświetlenia aktywnych powłok kryptograficznych (`.shell-btn.active`).
+- `[*]` Wyeliminowano defekt wielokrotnej inicjalizacji DOM (idempotentny boot) oraz zoptymalizowano pipeline produkcyjny Vite o automatyczną replikację zasobów do katalogu `dist/`.
+- `[+]` Zaimplementowano reguły dostępności Apple Design (§14): `prefers-reduced-transparency` i `prefers-contrast` oraz responsywne breakpointy mobilne.

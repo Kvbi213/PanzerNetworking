@@ -322,7 +322,124 @@ input[type="range"]::-webkit-slider-thumb:active {
   color: var(--accent-cyan);
 }
 
-/* Reduced Motion Preference */
+/* Interactive Frame Blocks in Wireshark Dissector */
+.frame-block {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+  user-select: none;
+}
+
+.frame-block:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.2);
+}
+
+.frame-block:active {
+  transform: scale(0.98);
+}
+
+.frame-block.active {
+  box-shadow: 0 0 16px currentColor;
+  border-width: 2px !important;
+  font-weight: 700;
+}
+
+/* Shell Button Active States */
+.shell-btn {
+  transition: all 150ms ease;
+}
+
+.shell-btn.active {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: var(--accent-purple);
+  color: #ffffff;
+  box-shadow: 0 0 14px var(--accent-purple-glow);
+}
+
+/* Responsive & Mobile Optimization (Apple HIG) */
+@media (max-width: 960px) {
+  .nav-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .nav-links {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3, .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .display-title {
+    font-size: 1.85rem;
+  }
+
+  .glass-surface {
+    padding: 1.5rem !important;
+  }
+
+  .btn-tactile {
+    min-height: 44px;
+    padding: 0.65rem 0.95rem;
+  }
+}
+
+/* Accessibility: Reduced Transparency (Apple Design §14) */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface {
+    background: #0d131f;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-surface-subtle {
+    background: #090e18;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  header.top-nav {
+    background: #070a11;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Accessibility: More Contrast (Apple Design §14) */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: rgba(255, 255, 255, 0.4);
+    --border-specular: #ffffff;
+    --text-muted: #e2e8f0;
+    --text-dim: #cbd5e1;
+  }
+
+  .glass-surface, .glass-surface-subtle {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion Preference (Apple Design §14) */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

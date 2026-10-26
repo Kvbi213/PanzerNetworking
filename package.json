@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node -e \"import('fs').then(fs => ['system_explainer.html', 'system_explainer.css', 'system_explainer.js'].forEach(f => fs.copyFileSync(f, 'dist/' + f)))\"",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -191,40 +191,49 @@
             <div class="tag-label" style="color: var(--accent-emerald);">SEKCJA 03 :: STEGANOGRAFIA SIECIOWA &amp; BINARNY STANDARD MTU</div>
             <h2 class="section-title">Wireshark Live Dissector :: Ramka 1400 B MTU</h2>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button id="btn-toggle-payload-type" class="btn-tactile btn-primary">
               TYP ŁADUNKU: 0x01 (DANE REALNE)
+            </button>
+            <button id="btn-resample-frame" class="btn-tactile">
+              NOWY PAKIET (RE-SAMPLE)
             </button>
           </div>
         </div>
 
         <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
           Każdy pakiet opuszczający Węzeł 0 jest formatowany do ściśle zdefiniowanej struktury o stałej długości <strong>1400 bajtów</strong>.
-          Zewnętrzny nagłówek udaje standardowy rekord TLS 1.3 Application Data (0x17), co uniemożliwia zaprom ogniowym NGFW detekcję sygnatur WireGuard lub OpenVPN.
+          Zewnętrzny nagłówek udaje standardowy rekord TLS 1.3 Application Data (0x17), co uniemożliwia zaporom ogniowym NGFW detekcję sygnatur WireGuard lub OpenVPN.
+          <strong>Kliknij dowolny segment poniżej</strong>, aby zbadać jego strukturę binarną, zakres offsetu oraz rolę steganograficzną.
         </p>
 
-        <!-- Frame Layout Diagram -->
-        <div style="background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; overflow-x: auto;">
+        <!-- Frame Layout Diagram (Interactive Segments) -->
+        <div style="background: rgba(0, 0, 0, 0.6); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; overflow-x: auto;">
           <div style="min-width: 680px; font-family: var(--font-mono); font-size: 0.72rem;">
             <div style="display: flex; gap: 4px; margin-bottom: 8px;">
-              <div style="flex: 1; background: rgba(0, 240, 255, 0.2); border: 1px solid var(--accent-cyan); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-cyan);">
+              <div class="frame-block active" data-field="tls" style="flex: 1; background: rgba(0, 240, 255, 0.2); border: 1px solid var(--accent-cyan); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-cyan);">
                 TLS 1.3 Record (5 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">0x17 0x0303 [1395 B]</span>
               </div>
-              <div style="flex: 2; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-emerald); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-emerald);">
+              <div class="frame-block" data-field="nonce" style="flex: 2; background: rgba(16, 185, 129, 0.2); border: 1px solid var(--accent-emerald); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-emerald);">
                 XChaCha20 Nonce (24 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">192-bitowy wektor IV</span>
               </div>
-              <div style="flex: 1; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-amber); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-amber);">
+              <div class="frame-block" data-field="inner" style="flex: 1; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-amber); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-amber);">
                 Inner Hdr (4 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">Type + Length</span>
               </div>
-              <div style="flex: 6; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--accent-purple); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-purple);">
+              <div class="frame-block" data-field="payload" style="flex: 6; background: rgba(168, 85, 247, 0.2); border: 1px solid var(--accent-purple); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-purple);">
                 Szyfrowany Ładunek AES-256-GCM + Losowy Padding Wyrównujący (1335 B)<br/>
                 <span style="color: var(--text-dim); font-size: 0.65rem;">Komórki Tor (514 B) + Padding do pełnych 1400 bajtów</span>
               </div>
-              <div style="flex: 2; background: rgba(244, 63, 94, 0.2); border: 1px solid var(--accent-rose); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-rose);">
+              <div class="frame-block" data-field="mac" style="flex: 2; background: rgba(244, 63, 94, 0.2); border: 1px solid var(--accent-rose); padding: 8px; border-radius: 6px; text-align: center; color: var(--accent-rose);">
                 Tagi MAC (32 B)<br/><span style="color: var(--text-dim); font-size: 0.65rem;">AES-GCM (16) + Poly1305 (16)</span>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Frame Field Detailed Inspector Box -->
+        <div id="frame-field-inspector" class="glass-surface-subtle" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: 0.78rem;">
+          <!-- Dynamically populated by JS -->
         </div>
 
         <!-- Hex / ASCII Split Viewer -->
@@ -232,7 +241,7 @@
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <span class="tag-label" style="color: var(--accent-cyan);">HEX DUMP (PIERWSZE 128 BAJTÓW)</span>
-              <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">Offset: 0x0000 - 0x007F</span>
+              <span id="hex-offset-label" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">Offset: 0x0000 - 0x007F</span>
             </div>
             <pre id="raw-hex-dump" style="background: rgba(0,0,0,0.7); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: #cbd5e1; overflow-x: auto; line-height: 1.5; height: 260px;"></pre>
           </div>
@@ -240,7 +249,7 @@
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <span class="tag-label" style="color: var(--accent-purple);">DEKODOWANIE ASCII / ENTROPIA</span>
-              <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-dim);">Brak widocznych stringów</span>
+              <span id="ascii-verdict-label" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-emerald);">Brak widocznych stringów (H=7.999 b/B)</span>
             </div>
             <pre id="raw-ascii-dump" style="background: rgba(0,0,0,0.7); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); overflow-x: auto; line-height: 1.5; height: 260px;"></pre>
           </div>
@@ -333,15 +342,20 @@
         <div class="grid-2">
           <!-- Tool 1: Shannon Entropy Analyzer -->
           <div class="glass-surface-subtle" style="padding: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <span class="tag-label" style="color: var(--accent-purple);">KALKULATOR ENTROPII SHANNONA H(X)</span>
               <span id="entropy-value-display" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent-purple);">7.9994 b/B</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 0.75rem;">
+              <span id="entropy-verdict-display" class="tag-label" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 4px;">
+                [+] STATUS: SZUM BIAŁY (NIEWYKRYWALNY DLA DPI)
+              </span>
             </div>
             <p style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 0.75rem;">
               Formuła: H(X) = - &Sigma; P(x) * log2(P(x)). Wartość &gt; 7.999 oznacza brak powtarzalnych wzorców statystycznych dla systemów DPI.
             </p>
-            <textarea id="entropy-input" aria-label="Tekst wejściowy do analizy entropii Shannona" style="width: 100%; height: 90px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 0.75rem; padding: 0.5rem; resize: none; margin-bottom: 0.75rem;" placeholder="Wklej dowolny tekst lub kliknij 'Generuj Strumień Szyfrowany'...">G7b$K9!xQ2#Lp90zZ&1*vNm8@5rT+wYq3!pLx9#mK4$zQ8&v</textarea>
-            <div style="display: flex; gap: 0.5rem;">
+            <textarea id="entropy-input" aria-label="Tekst wejściowy do analizy entropii Shannona" style="width: 100%; height: 90px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-subtle); border-radius: 8px; color: #fff; font-family: var(--font-mono); font-size: 0.75rem; padding: 0.5rem; resize: none; margin-bottom: 0.75rem;" placeholder="Wklej dowolny tekst lub kliknij 'Generuj Szyfr PanzerNet'..."></textarea>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <button id="btn-entropy-calc" aria-label="Oblicz entropię Shannona" class="btn-tactile btn-primary">OBLICZ ENTROPIĘ</button>
               <button id="btn-entropy-mock" aria-label="Generuj losowy szyfr PanzerNetworking" class="btn-tactile">GENERUJ SZYFR PANZERNET</button>
             </div>
@@ -351,7 +365,7 @@
           <div class="glass-surface-subtle" style="padding: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
               <span class="tag-label" style="color: var(--accent-cyan);">BILANS ŁĄCZA 60 GHz V-BAND &amp; TLEN</span>
-              <span id="attenuation-display" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">-117.2 dB</span>
+              <span id="attenuation-display" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">-120.0 dB</span>
             </div>
             <p style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 0.75rem;">
               Rezonans tlenowy (O2) powoduje tłumienie ~16 dB/km, uniemożliwiając podsłuch z boku wiązki &lt;1.5°.
@@ -365,7 +379,7 @@
             </div>
             <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px;">
               <span>Tłumienie tlenowe: </span><span id="o2-loss-label" style="color: var(--accent-rose); font-weight: 700;">4.0 dB</span> |
-              <span>Tłumienie FSPL: </span><span id="fspl-loss-label" style="color: #fff; font-weight: 700;">113.2 dB</span>
+              <span>Tłumienie FSPL: </span><span id="fspl-loss-label" style="color: #fff; font-weight: 700;">116.0 dB</span>
             </div>
           </div>
         </div>
