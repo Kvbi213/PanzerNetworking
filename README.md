@@ -195,10 +195,10 @@ Aplikacja uruchomi się lokalnie pod adresem: `http://localhost:3000/`.
 
 ### Budowanie produkcyjne:
 ```bash
-# Weryfikacja typów TypeScript i kompilacja bundla Vite (wraz z automatyczną minifikacją CSS)
+# Weryfikacja typów TypeScript i kompilacja bundla Vite (CSS jest minifikowane automatycznie)
 npm run build
 ```
-Zoptymalizowane pliki statyczne zostaną wygenerowane w katalogu `dist/`. Arkusz źródłowy `system_explainer.css` jest wersjonowany w repozytorium, a wersje minifikowane generowane są automatycznie w potoku Vite (`cssMinify: true`) bez zaśmiecania VCS plikami pochodnymi.
+Zoptymalizowane pliki statyczne zostaną wygenerowane w katalogu `dist/`. Arkusz źródłowy `system_explainer.css` jest wersjonowany w repozytorium, a wersja produkcyjna jest tworzona w procesie budowania Vite bez zaśmiecania VCS plikami pochodnymi.
 
 ---
 
