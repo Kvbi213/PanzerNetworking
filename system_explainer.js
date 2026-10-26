@@ -399,7 +399,7 @@ function generateRandomByteHex() {
  * @returns {boolean} true jeśli suma wynosi dokładnie 65 B, rzuca Error przy niezgodności.
  */
 function validateFieldSpecs(specs = DEFAULT_FIELD_SPECS) {
-  if (!specs || typeof specs !== 'object') {
+  if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
     throw new TypeError('Specyfikacja pól nagłówka musi być obiektem.');
   }
 
@@ -426,6 +426,9 @@ function validateFieldSpecs(specs = DEFAULT_FIELD_SPECS) {
 function generateFrameData(isChaff = false, specs = DEFAULT_FIELD_SPECS) {
   if (typeof isChaff !== 'boolean') {
     throw new TypeError('Parametr isChaff musi być typu boolean');
+  }
+  if (!specs || typeof specs !== 'object' || Array.isArray(specs)) {
+    throw new TypeError('Parametr specs musi być obiektem specyfikacji.');
   }
 
   validateFieldSpecs(specs);
@@ -549,7 +552,7 @@ function updateWiresharkDump() {
   } catch (err) {
     console.error('[!] Błąd generowania ramki Wireshark:', err);
     const hexEl = document.getElementById('raw-hex-dump');
-    if (hexEl) hexEl.textContent = '0000  17 03 03 05 73 [BŁĄD PARSOWANIA RAMKI]';
+    if (hexEl) hexEl.textContent = `0000  17 03 03 05 73 [${err.message}]`;
   }
 }
 
