@@ -374,13 +374,19 @@ function generateRandomByteHex() {
 }
 
 function validateFieldSpecs() {
-  const specs = { tls: 5, nonce: 24, inner: 4, mac: 32 };
-  const headerTotal = specs.tls + specs.nonce + specs.inner + specs.mac;
-  if (headerTotal !== 65) {
-    console.error(`[!] BŁĄD INTEGRALNOŚCI: Suma nagłówków wynosi ${headerTotal} B zamiast 65 B`);
+  try {
+    const specs = { tls: 5, nonce: 24, inner: 4, mac: 32 };
+    if (!specs || typeof specs !== 'object') return false;
+    const headerTotal = Number(specs.tls || 0) + Number(specs.nonce || 0) + Number(specs.inner || 0) + Number(specs.mac || 0);
+    if (headerTotal !== 65) {
+      console.error(`[!] BŁĄD INTEGRALNOŚCI: Suma nagłówków wynosi ${headerTotal} B zamiast 65 B`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[!] BŁĄD WALIDACJI nagłówków: ${err ? err.message : String(err)}`);
     return false;
   }
-  return true;
 }
 
 function generateFrameData(isChaff) {
@@ -391,7 +397,7 @@ function generateFrameData(isChaff) {
     const hexLines = [];
     const asciiLines = [];
 
-    if (!cachedFrameRandomBytes || cachedFrameRandomBytes.length !== 128) {
+    if (!Array.isArray(cachedFrameRandomBytes) || cachedFrameRandomBytes.length !== 128) {
       cachedFrameRandomBytes = [];
       for (let i = 0; i < 128; i++) {
         cachedFrameRandomBytes.push(generateRandomByteHex());
