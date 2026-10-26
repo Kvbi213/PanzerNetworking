@@ -126,21 +126,29 @@ runTest('1400 B Transport Frame Header Specification Invariants', () => {
 
 // TEST 7: Frame Dissector Logic & Field Validation Robustness
 runTest('Frame Dissector Field Validation Functionality & Type Safety', () => {
-  function testValidateFieldSpecs(specs) {
-    try {
-      if (!specs || typeof specs !== 'object') return false;
-      const headerTotal = Number(specs.tls || 0) + Number(specs.nonce || 0) + Number(specs.inner || 0) + Number(specs.mac || 0);
-      return headerTotal === 65;
-    } catch {
-      return false;
+  const DEFAULT_SPECS = Object.freeze({ tls: 5, nonce: 24, inner: 4, mac: 32 });
+
+  function testValidateFieldSpecs(specs = DEFAULT_SPECS) {
+    if (!specs || typeof specs !== 'object') {
+      throw new TypeError('Specyfikacja pól nagłówka musi być obiektem.');
     }
+    const headerTotal =
+      Number(specs.tls ?? 0) +
+      Number(specs.nonce ?? 0) +
+      Number(specs.inner ?? 0) +
+      Number(specs.mac ?? 0);
+
+    if (headerTotal !== 65) {
+      throw new Error(`Błąd integralności: suma nagłówków wynosi ${headerTotal} B, oczekiwano 65 B.`);
+    }
+    return true;
   }
 
+  assert.strictEqual(testValidateFieldSpecs(), true, 'Domyślna specyfikacja powinna przejść walidację');
   assert.strictEqual(testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 32 }), true, 'Standardowe nagłówki powinny przejść walidację');
-  assert.strictEqual(testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), false, 'Niekompletne nagłówki powinny zostać odrzucone');
-  assert.strictEqual(testValidateFieldSpecs(null), false, 'null powinien zostać odrzucony');
-  assert.strictEqual(testValidateFieldSpecs(undefined), false, 'undefined powinien zostać odrzucony');
-  assert.strictEqual(testValidateFieldSpecs('invalid'), false, 'string powinien zostać odrzucony');
+  assert.throws(() => testValidateFieldSpecs({ tls: 5, nonce: 24, inner: 4, mac: 31 }), /suma nagłówków wynosi/, 'Niekompletne nagłówki powinny rzucić Error');
+  assert.throws(() => testValidateFieldSpecs(null), TypeError, 'null powinien rzucić TypeError');
+  assert.throws(() => testValidateFieldSpecs('invalid'), TypeError, 'string powinien rzucić TypeError');
 });
 
 console.log(`\n=================================================`);
