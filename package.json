@@ -1,11 +1,13 @@
 {
   "name": "panzernetworking",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node -e \"import('fs').then(fs => ['system_explainer.html', 'system_explainer.css', 'system_explainer.js'].forEach(f => fs.copyFileSync(f, 'dist/' + f)))\"",
+    "build": "tsc --noEmit && vite build",
+    "postbuild": "node scripts/copy_assets.js",
+    "test": "node scripts/run_tests.js",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -373,45 +373,65 @@ function generateRandomByteHex() {
   return hexChars[Math.floor(Math.random() * 16)] + hexChars[Math.floor(Math.random() * 16)];
 }
 
+function validateFieldSpecs() {
+  const specs = { tls: 5, nonce: 24, inner: 4, mac: 32 };
+  const headerTotal = specs.tls + specs.nonce + specs.inner + specs.mac;
+  if (headerTotal !== 65) {
+    console.error(`[!] BŁĄD INTEGRALNOŚCI: Suma nagłówków wynosi ${headerTotal} B zamiast 65 B`);
+    return false;
+  }
+  return true;
+}
+
 function generateFrameData(isChaff) {
-  const hexLines = [];
-  const asciiLines = [];
+  try {
+    validateFieldSpecs();
+    const hexLines = [];
+    const asciiLines = [];
 
-  if (!cachedFrameRandomBytes) {
-    cachedFrameRandomBytes = [];
-    for (let i = 0; i < 128; i++) {
-      cachedFrameRandomBytes.push(generateRandomByteHex());
-    }
-  }
-
-  for (let row = 0; row < 8; row++) {
-    const offset = (row * 16).toString(16).padStart(4, '0');
-    const bytes = [];
-    let ascii = "";
-
-    for (let col = 0; col < 16; col++) {
-      const byteIdx = row * 16 + col;
-      let bHex = cachedFrameRandomBytes[byteIdx] || "00";
-
-      if (byteIdx === 0) bHex = "17"; // TLS 1.3 Application Data
-      else if (byteIdx === 1) bHex = "03"; // TLS Major
-      else if (byteIdx === 2) bHex = "03"; // TLS Minor
-      else if (byteIdx === 3) bHex = "05"; // Length high
-      else if (byteIdx === 4) bHex = "73"; // Length low (1395 B)
-      else if (byteIdx === 28) bHex = isChaff ? "ff" : "01"; // Inner Packet Type
-      else if (byteIdx === 29) bHex = "05"; // Payload length high
-      else if (byteIdx === 30) bHex = "2a"; // Payload length low
-
-      bytes.push(bHex);
-      const bVal = parseInt(bHex, 16);
-      ascii += (bVal >= 32 && bVal <= 126) ? String.fromCharCode(bVal) : ".";
+    if (!cachedFrameRandomBytes) {
+      cachedFrameRandomBytes = [];
+      for (let i = 0; i < 128; i++) {
+        cachedFrameRandomBytes.push(generateRandomByteHex());
+      }
     }
 
-    hexLines.push(`${offset}  ${bytes.slice(0, 8).join(' ')}  ${bytes.slice(8).join(' ')}`);
-    asciiLines.push(`|${ascii}|`);
-  }
+    if (cachedFrameRandomBytes.length !== 128) {
+      console.warn(`[!] Ostrzeżenie: Wygenerowano bufor o długości ${cachedFrameRandomBytes.length} B (wymagane 128 B)`);
+    }
 
-  return { hex: hexLines.join('\n'), ascii: asciiLines.join('\n') };
+    for (let row = 0; row < 8; row++) {
+      const offset = (row * 16).toString(16).padStart(4, '0');
+      const bytes = [];
+      let ascii = "";
+
+      for (let col = 0; col < 16; col++) {
+        const byteIdx = row * 16 + col;
+        let bHex = cachedFrameRandomBytes[byteIdx] || "00";
+
+        if (byteIdx === 0) bHex = "17"; // TLS 1.3 Application Data
+        else if (byteIdx === 1) bHex = "03"; // TLS Major
+        else if (byteIdx === 2) bHex = "03"; // TLS Minor
+        else if (byteIdx === 3) bHex = "05"; // Length high
+        else if (byteIdx === 4) bHex = "73"; // Length low (1395 B)
+        else if (byteIdx === 28) bHex = isChaff ? "ff" : "01"; // Inner Packet Type
+        else if (byteIdx === 29) bHex = "05"; // Payload length high
+        else if (byteIdx === 30) bHex = "2a"; // Payload length low
+
+        bytes.push(bHex);
+        const bVal = parseInt(bHex, 16);
+        ascii += (bVal >= 32 && bVal <= 126) ? String.fromCharCode(bVal) : ".";
+      }
+
+      hexLines.push(`${offset}  ${bytes.slice(0, 8).join(' ')}  ${bytes.slice(8).join(' ')}`);
+      asciiLines.push(`|${ascii}|`);
+    }
+
+    return { hex: hexLines.join('\n'), ascii: asciiLines.join('\n') };
+  } catch (err) {
+    console.error('[!] Błąd generowania ramki Wireshark:', err);
+    return { hex: '0000  17 03 03 05 73 [BŁĄD PARSOWANIA]', ascii: '|.....|' };
+  }
 }
 
 function renderFrameFieldInspector(fieldKey) {
@@ -701,64 +721,77 @@ document.querySelectorAll('.persona-btn').forEach(btn => {
 // 8. UI CONTROLLER: SHANNON ENTROPY & 60 GHz CALCULATORS
 // -------------------------------------------------------------
 function calculateShannonEntropy(rawText) {
-  const text = String(rawText || '').slice(0, 50000);
-  if (!text || text.length === 0) return 0;
-  const freq = {};
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    freq[char] = (freq[char] || 0) + 1;
+  try {
+    const text = String(rawText || '').slice(0, 50000);
+    if (!text || text.length === 0) return 0;
+    const freq = {};
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      freq[char] = (freq[char] || 0) + 1;
+    }
+    let entropy = 0;
+    const len = text.length;
+    for (const char in freq) {
+      const p = freq[char] / len;
+      entropy -= p * Math.log2(p);
+    }
+    return Number.isFinite(entropy) ? entropy : 0;
+  } catch (err) {
+    console.error('[!] Błąd obliczania entropii Shannona:', err);
+    return 0;
   }
-  let entropy = 0;
-  const len = text.length;
-  for (const char in freq) {
-    const p = freq[char] / len;
-    entropy -= p * Math.log2(p);
-  }
-  return entropy;
 }
 
 function updateEntropyDisplay(val) {
-  const display = document.getElementById('entropy-value-display');
-  const verdict = document.getElementById('entropy-verdict-display');
-  if (display) display.textContent = `${val.toFixed(4)} b/B`;
+  try {
+    const display = document.getElementById('entropy-value-display');
+    const verdict = document.getElementById('entropy-verdict-display');
+    if (display) display.textContent = `${val.toFixed(4)} b/B`;
 
-  if (verdict) {
-    if (val >= 7.99) {
-      verdict.textContent = "[+] STATUS: SZUM BIAŁY (NIEWYKRYWALNY DLA DPI)";
-      verdict.style.color = "var(--accent-emerald)";
-      verdict.style.borderColor = "rgba(16, 185, 129, 0.3)";
-      verdict.style.background = "rgba(16, 185, 129, 0.15)";
-    } else if (val >= 6.0) {
-      verdict.textContent = "[!] STATUS: ŚREDNIA ENTROPIA (WYKRYWALNA STRUKTURA)";
-      verdict.style.color = "var(--accent-amber)";
-      verdict.style.borderColor = "rgba(245, 158, 11, 0.3)";
-      verdict.style.background = "rgba(245, 158, 11, 0.15)";
-    } else {
-      verdict.textContent = "[!] STATUS: NISKA ENTROPIA (JAWNY TEKST / BŁĄD)";
-      verdict.style.color = "var(--accent-rose)";
-      verdict.style.borderColor = "rgba(244, 63, 94, 0.3)";
-      verdict.style.background = "rgba(244, 63, 94, 0.15)";
+    if (verdict) {
+      if (val >= 7.99) {
+        verdict.textContent = "[+] STATUS: SZUM BIAŁY (NIEWYKRYWALNY DLA DPI)";
+        verdict.style.color = "var(--accent-emerald)";
+        verdict.style.borderColor = "rgba(16, 185, 129, 0.3)";
+        verdict.style.background = "rgba(16, 185, 129, 0.15)";
+      } else if (val >= 6.0) {
+        verdict.textContent = "[!] STATUS: ŚREDNIA ENTROPIA (WYKRYWALNA STRUKTURA)";
+        verdict.style.color = "var(--accent-amber)";
+        verdict.style.borderColor = "rgba(245, 158, 11, 0.3)";
+        verdict.style.background = "rgba(245, 158, 11, 0.15)";
+      } else {
+        verdict.textContent = "[!] STATUS: NISKA ENTROPIA (JAWNY TEKST / BŁĄD)";
+        verdict.style.color = "var(--accent-rose)";
+        verdict.style.borderColor = "rgba(244, 63, 94, 0.3)";
+        verdict.style.background = "rgba(244, 63, 94, 0.15)";
+      }
     }
+  } catch (err) {
+    console.error('[!] Błąd aktualizacji widoku entropii:', err);
   }
 }
 
 function update60GhzCalculations(distanceKm) {
-  const d = (Number.isFinite(distanceKm) && distanceKm >= 0.05 && distanceKm <= 3.0) ? distanceKm : 0.25;
-  const distLabel = document.getElementById('dist-label');
-  if (distLabel) distLabel.textContent = `${d.toFixed(2)} km (${Math.round(d * 1000)} m)`;
+  try {
+    const d = (Number.isFinite(distanceKm) && distanceKm >= 0.05 && distanceKm <= 3.0) ? distanceKm : 0.25;
+    const distLabel = document.getElementById('dist-label');
+    if (distLabel) distLabel.textContent = `${d.toFixed(2)} km (${Math.round(d * 1000)} m)`;
 
-  // FSPL at 60 GHz: 92.45 + 20*log10(60) + 20*log10(d) = 128.01 + 20*log10(d)
-  const fspl = 128.01 + 20 * Math.log10(d);
-  const o2Loss = 16.0 * d;
-  const totalLoss = fspl + o2Loss;
+    // FSPL at 60 GHz: 92.45 + 20*log10(60) + 20*log10(d) = 128.01 + 20*log10(d)
+    const fspl = 128.01 + 20 * Math.log10(d);
+    const o2Loss = 16.0 * d;
+    const totalLoss = fspl + o2Loss;
 
-  const attDisplay = document.getElementById('attenuation-display');
-  const o2Label = document.getElementById('o2-loss-label');
-  const fsplLabel = document.getElementById('fspl-loss-label');
+    const attDisplay = document.getElementById('attenuation-display');
+    const o2Label = document.getElementById('o2-loss-label');
+    const fsplLabel = document.getElementById('fspl-loss-label');
 
-  if (attDisplay) attDisplay.textContent = `-${totalLoss.toFixed(1)} dB`;
-  if (o2Label) o2Label.textContent = `${o2Loss.toFixed(1)} dB`;
-  if (fsplLabel) fsplLabel.textContent = `${fspl.toFixed(1)} dB`;
+    if (attDisplay) attDisplay.textContent = `-${totalLoss.toFixed(1)} dB`;
+    if (o2Label) o2Label.textContent = `${o2Loss.toFixed(1)} dB`;
+    if (fsplLabel) fsplLabel.textContent = `${fspl.toFixed(1)} dB`;
+  } catch (err) {
+    console.error('[!] Błąd obliczeń bilansu łącza 60 GHz:', err);
+  }
 }
 
 function initCalculators() {
